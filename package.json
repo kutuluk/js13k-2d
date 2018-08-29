@@ -1,0 +1,38 @@
+{
+    "name": "js13k-2d",
+    "description": "A <2kb 2d WebGL renderer, designed for js13k",
+    "keywords": [
+        "webgl",
+        "2d",
+        "renderer",
+        "js13k"
+    ],
+    "repository": "github:kutuluk/js13k-2d",
+    "author": "Evgeniy Pavlov <mail@kutuluk.com>",
+    "license": "MIT",
+    "version": "0.1.1",
+    "source": "src/renderer.js",
+    "main": "dist/renderer.js",
+    "module": "dist/renderer.m.js",
+    "files": [
+        "src",
+        "dist"
+    ],
+    "scripts": {
+        "clean": "rimraf dist && mkdirp dist",
+        "microbundle": "microbundle --name Renderer --compress true --sourcemap false",
+        "example": "microbundle -i ./example/src/app.js -o ./example/bundle.js -f cjs --compress false --sourcemap false",
+        "build": "npm-run-all --silent clean microbundle example",
+        "lint": "eslint src",
+        "release": "npm install && npm-run-all --silent lint build && npm publish"
+    },
+    "devDependencies": {
+        "eslint": "^5.3.0",
+        "eslint-config-airbnb-base": "^13.1.0",
+        "eslint-plugin-import": "^2.8.0",
+        "microbundle": "^0.6.0",
+        "mkdirp": "^0.5.1",
+        "npm-run-all": "^4.1.2",
+        "rimraf": "^2.6.2"
+    }
+}

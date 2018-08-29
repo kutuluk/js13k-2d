@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="text/javascript" src='stats.min.js'></script>
+    <title>js13k-ecs example</title>
+    <style type="text/css">
+        html,
+        body,
+        canvas {
+            margin: 0;
+            border: 0;
+            padding: 0;
+            display: block;
+            overflow: hidden;
+            background-color: #000000;
+        }
+
+        #view {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #info {
+            position: absolute;
+            top: 0px;
+            left: 90px;
+            color: rgb(187, 187, 187);
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id='view'></canvas>
+    <div id='info'></div>
+    <script type="text/javascript" src='bundle.js'></script>
+</body>
+
+</html>

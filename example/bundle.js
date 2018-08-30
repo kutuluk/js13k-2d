@@ -178,6 +178,23 @@ var atlasImg = function () {
     ctx.stroke();
     return canvas;
 };
+var logoMask = function () {
+    var canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(400, 300);
+    for (var angle = 0;angle < Math.PI * 2; angle += Math.PI * 2 / 5) {
+        ctx.lineTo(400 - Math.sin(angle) * 250, 300 - Math.cos(angle) * 250);
+    }
+    ctx.closePath();
+    ctx.fill();
+    var ref = ctx.getImageData(0, 0, 800, 600);
+    var data = ref.data;
+    return function (x, y) { return data[(y * 800 + x) * 4] === 255; };
+};
 var atlasTex = renderer.texture(atlasImg());
 atlasTex.tex.alphaTest = 0.5;
 var bBitmap = renderer.bitmap(atlasTex, 0, 0, 31, 31);
@@ -186,13 +203,20 @@ var fBitmap = renderer.bitmap(atlasTex, 64, 0, 95, 31);
 var bitmaps = [atlasTex,bBitmap,qBitmap,fBitmap];
 var len = 0;
 var sprs = [];
+var mask = logoMask();
 var addSprite = function (l, a) {
     len += a;
     for (var i$$1 = 0;i$$1 < a; i$$1++) {
         var s = new i.Sprite(bitmaps[i$$1 % 4]);
+        var x = 0;
+        var y = 0;
+        while (!mask(x, y)) {
+            x = ~(~(view.width * Math.random()));
+            y = ~(~(view.height * Math.random()));
+        }
         s.position = {
-            x: view.width * 0.05 + Math.random() * view.width * 0.9,
-            y: view.height * 0.05 + Math.random() * view.height * 0.9
+            x: x,
+            y: y
         };
         s.scale = {
             x: 0.5,

@@ -1,5 +1,6 @@
 # js13k-2d
 
+> ![logo](https://raw.githubusercontent.com/kutuluk/js13k-2d/master/logo.jpg 'logo')
 > A 2kb 2d WebGL renderer, designed for [Js13kGames](http://js13kgames.com).
 
 [![NPM version](https://img.shields.io/npm/v/js13k-2d.svg?style=flat-square)](https://www.npmjs.com/package/js13k-2d)[![Build Status](https://img.shields.io/travis/kutuluk/js13k-2d/master.svg?style=flat-square)](https://travis-ci.org/kutuluk/js13k-2d)
@@ -33,7 +34,5 @@ The [UMD](https://github.com/umdjs/umd) build is also available on [unpkg](https
 You can find the library on `window.Renderer`.
 
 ## Usage
-
-![demo](https://raw.githubusercontent.com/kutuluk/js13k-2d/master/demo.jpg 'demo')
 
 See example folder. [Live example](https://kutuluk.github.io/js13k-2d).

@@ -69,6 +69,28 @@ const atlasImg = () => {
   return canvas;
 };
 
+const logoMask = () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 800;
+  canvas.height = 600;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+
+  ctx.moveTo(400, 300);
+  for (let angle = 0; angle < Math.PI * 2; angle += (Math.PI * 2) / 5) {
+    ctx.lineTo(400 - Math.sin(angle) * 250, 300 - Math.cos(angle) * 250);
+  }
+
+  ctx.closePath();
+  ctx.fill();
+
+  const { data } = ctx.getImageData(0, 0, 800, 600);
+
+  return (x, y) => data[(y * 800 + x) * 4] === 255;
+};
+
 const atlasTex = renderer.texture(atlasImg());
 atlasTex.tex.alphaTest = 0.5;
 
@@ -82,14 +104,22 @@ let len = 0;
 
 const sprs = [];
 
+const mask = logoMask();
+
 const addSprite = (l, a) => {
   len += a;
   for (let i = 0; i < a; i++) {
     const s = new Renderer.Sprite(bitmaps[i % 4]);
-    s.position = {
-      x: view.width * 0.05 + Math.random() * view.width * 0.9,
-      y: view.height * 0.05 + Math.random() * view.height * 0.9,
-    };
+
+    let x = 0;
+    let y = 0;
+
+    while (!mask(x, y)) {
+      x = ~~(view.width * Math.random());
+      y = ~~(view.height * Math.random());
+    }
+
+    s.position = { x, y };
     s.scale = { x: 0.5, y: 0.5 };
     // s.alpha = 0.8;
     s.tint = Math.random() * 0xffffff;

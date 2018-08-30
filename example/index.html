@@ -13,20 +13,36 @@
             padding: 0;
             display: block;
             overflow: hidden;
-            background-color: #000000;
         }
 
         #view {
+            /*
             width: 100vw;
             height: 100vh;
+            */
+            /*
+            width: 800px;
+            height: 600px;
+            */
+            max-width: 800px;
+            max-height: 600px;
+            width: 100%;
+            height: 100%;
+
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -moz-transform: translate(-50%, -50%);
+            -webkit-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
         }
 
         #info {
             position: absolute;
             top: 0px;
             left: 90px;
-            color: rgb(187, 187, 187);
-            font-size: 16px;
+            font-family: monospace;
+            font-size: 20px;
         }
     </style>
 </head>

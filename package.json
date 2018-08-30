@@ -1,6 +1,6 @@
 {
     "name": "js13k-2d",
-    "description": "A <2kb 2d WebGL renderer, designed for js13k",
+    "description": "A 2kb 2d WebGL renderer, designed for js13k",
     "keywords": [
         "webgl",
         "2d",
@@ -10,7 +10,7 @@
     "repository": "github:kutuluk/js13k-2d",
     "author": "Evgeniy Pavlov <mail@kutuluk.com>",
     "license": "MIT",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "source": "src/renderer.js",
     "main": "dist/renderer.js",
     "module": "dist/renderer.m.js",
@@ -20,7 +20,7 @@
     ],
     "scripts": {
         "clean": "rimraf dist && mkdirp dist",
-        "microbundle": "microbundle --name Renderer --compress true --sourcemap false",
+        "microbundle": "microbundle --compress true --sourcemap false --name Renderer",
         "example": "microbundle -i ./example/src/app.js -o ./example/bundle.js -f cjs --compress false --sourcemap false",
         "build": "npm-run-all --silent clean microbundle example",
         "lint": "eslint src",

@@ -6,7 +6,7 @@ class Node {
     this.d = false;
   }
 
-  remove() {
+  r() {
     this.d = true;
   }
 }

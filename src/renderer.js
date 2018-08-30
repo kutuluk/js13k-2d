@@ -8,6 +8,7 @@ class Layer {
 
   add(sprite) {
     sprite.node = this.l.add(sprite);
+    sprite.z = this.z;
   }
 }
 
@@ -25,7 +26,7 @@ class Sprite {
   }
 
   remove() {
-    this.node && this.node.remove();
+    this.node && this.node.r();
   }
 }
 
@@ -63,8 +64,10 @@ const Renderer = (canvas, options) => {
   };
 
   const createShaderProgram = (vs, fs) => {
-    const cvs = compileShader(vs, gl.VERTEX_SHADER);
-    const cfs = compileShader(fs, gl.FRAGMENT_SHADER);
+    // const cvs = compileShader(vs, gl.VERTEX_SHADER);
+    // const cfs = compileShader(fs, gl.FRAGMENT_SHADER);
+    const cvs = compileShader(vs, 35633);
+    const cfs = compileShader(fs, 35632);
 
     const program = gl.createProgram();
     gl.attachShader(program, cvs);
@@ -89,91 +92,120 @@ const Renderer = (canvas, options) => {
     return buffer;
   };
 
-  const texture = (src, wraps, wrapt, min, mag) => {
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wraps || gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapt || gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, mag || gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, min || gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
-    gl.generateMipmap(gl.TEXTURE_2D);
-
-    return {
-      tex,
-      width: src.width,
-      height: src.height,
-      uvs: [0, 0, 1, 1],
-    };
-  };
-
-  const bitmap = (tex, left, top, right, bottom) => {
-    const width = right - left + 1;
-    const height = bottom - top + 1;
-    const r = {
-      tex: tex.tex,
-      width,
-      height,
-      uvs: [
-        left / tex.width,
-        top / tex.height,
-        width / tex.width,
-        height / tex.height,
-      ],
-    };
-    return r;
-  };
-
   const layers = [];
 
-  const layer = (z) => {
-    const exist = layers.find(c => c.z === z);
-    if (exist) return exist;
+  const renderer = {
+    gl,
 
-    const l = new Layer(z);
-    layers.push(l);
-    layers.sort((a, b) => {
-      if (a.z < b.z) return -1;
-      if (a.z > b.z) return 1;
-      return 0;
-    });
+    offset: {
+      x: 0,
+      y: 0,
+    },
 
-    return l;
+    bkg(r, g, b, a) {
+      gl.clearColor(r, g, b, a || ((a === 0) ? 0 : 1));
+    },
+
+    texture(src, wraps, wrapt, min, mag) {
+      const tex = gl.createTexture();
+      const glTEXTURE2D = 3553;
+
+      /*
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wraps || gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapt || gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, mag || gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, min || gl.LINEAR);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      */
+      gl.bindTexture(glTEXTURE2D, tex);
+      gl.texParameteri(glTEXTURE2D, 10242, wraps || 33071);
+      gl.texParameteri(glTEXTURE2D, 10243, wrapt || 33071);
+      gl.texParameteri(glTEXTURE2D, 10240, mag || 9729);
+      gl.texParameteri(glTEXTURE2D, 10241, min || 9729);
+      gl.texImage2D(glTEXTURE2D, 0, 6408, 6408, 5121, src);
+      // gl.generateMipmap(glTEXTURE2D);
+
+      tex.alphaTest = 1 / 256;
+
+      return {
+        tex,
+        width: src.width,
+        height: src.height,
+        uvs: [0, 0, 1, 1],
+      };
+    },
+
+    bitmap(tex, left, top, right, bottom) {
+      const width = right - left + 1;
+      const height = bottom - top + 1;
+      return {
+        tex: tex.tex,
+        width,
+        height,
+        uvs: [left / tex.width, top / tex.height, width / tex.width, height / tex.height],
+      };
+    },
+
+    layer(z) {
+      const exist = layers.find(c => c.z === z);
+      if (exist) return exist;
+
+      const l = new Layer(z);
+      layers.push(l);
+      layers.sort((a, b) => {
+        /*
+        if (a.z < b.z) return -1;
+        if (a.z > b.z) return 1;
+        */
+        if (a.z < b.z) return 1;
+        if (a.z > b.z) return -1;
+        return 0;
+      });
+
+      return l;
+    },
   };
 
-  const zeroLayer = layer(0);
 
-  const add = (sprite) => {
+  const zeroLayer = renderer.layer(0);
+
+  renderer.add = (sprite) => {
     zeroLayer.add(sprite);
   };
 
-  const vs = `precision mediump float;
-attribute vec2 g;
+  const vs = `attribute vec2 g;
 attribute vec2 a;
 attribute vec2 t;
 attribute float r;
 attribute vec2 s;
 attribute vec4 u;
 attribute vec4 c;
+attribute float z;
 uniform mat4 m;
 varying vec2 v;
-varying vec4 vc;
+varying vec4 i;
 void main(){
 v=u.xy+g*u.zw;
-vc=c.abgr;
+i=c.abgr;
 vec2 p=(g-a)*s;
-float cr=cos(r);
-float sr=sin(r);
-p=vec2(p.x*cr-p.y*sr,p.x*sr+p.y*cr);
+float q=cos(r);
+float w=sin(r);
+p=vec2(p.x*q-p.y*w,p.x*w+p.y*q);
 p+=a+t;
-gl_Position=m*vec4(p,0,1);}`;
+gl_Position=m*vec4(p,z,1);}`;
 
   const fs = `precision mediump float;
 uniform sampler2D x;
+uniform float j;
 varying vec2 v;
-varying vec4 vc;
+varying vec4 i;
 void main(){
-gl_FragColor=texture2D(x,v)*vc;}`;
+vec4 c=texture2D(x,v);
+if(c.a<j)discard;
+gl_FragColor=c*i;
+}`;
 
   const program = createShaderProgram(vs, fs);
 
@@ -190,23 +222,17 @@ gl_FragColor=texture2D(x,v)*vc;}`;
   };
 
   // indicesBuffer
-  createBuffer(
-    gl.ELEMENT_ARRAY_BUFFER,
-    new Uint16Array([0, 1, 2, 2, 1, 3]),
-    gl.STATIC_DRAW,
-  );
+  // createBuffer(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 2, 1, 3]), gl.STATIC_DRAW);
+  createBuffer(34963, new Uint16Array([0, 1, 2, 2, 1, 3]), 35044);
 
   // vertexBuffer
-  createBuffer(
-    gl.ARRAY_BUFFER,
-    new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]),
-    gl.STATIC_DRAW,
-  );
+  // createBuffer(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]), gl.STATIC_DRAW);
+  createBuffer(34962, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]), 35044);
 
-  // geoLocation
+  // vertexLocation
   bindAttrib('g', 2);
 
-  const floatSize = 2 + 2 + 1 + 2 + 4 + 1;
+  const floatSize = 2 + 2 + 1 + 2 + 4 + 1 + 1;
   const byteSize = floatSize * 4;
 
   const arrayBuffer = new ArrayBuffer(maxBatch * byteSize);
@@ -214,7 +240,8 @@ gl_FragColor=texture2D(x,v)*vc;}`;
   const uintView = new Uint32Array(arrayBuffer);
 
   // dynamicBuffer
-  createBuffer(gl.ARRAY_BUFFER, arrayBuffer, gl.DYNAMIC_DRAW);
+  // createBuffer(gl.ARRAY_BUFFER, arrayBuffer, gl.DYNAMIC_DRAW);
+  createBuffer(34962, arrayBuffer, 35048);
 
   // anchorLocation
   bindAttrib('a', 2, byteSize, 1);
@@ -226,11 +253,15 @@ gl_FragColor=texture2D(x,v)*vc;}`;
   bindAttrib('t', 2, byteSize, 1, 20);
   // uvsLocation
   bindAttrib('u', 4, byteSize, 1, 28);
-  // tintLocation
-  bindAttrib('c', 4, byteSize, 1, 44, gl.UNSIGNED_BYTE, true);
+  // colorLocation
+  // bindAttrib('c', 4, byteSize, 1, 44, gl.UNSIGNED_BYTE, true);
+  bindAttrib('c', 4, byteSize, 1, 44, 5121, true);
+  // zLocation
+  bindAttrib('z', 1, byteSize, 1, 48);
 
   const matrixLocation = gl.getUniformLocation(program, 'm');
   const textureLocation = gl.getUniformLocation(program, 'x');
+  const alphaTestLocation = gl.getUniformLocation(program, 'j');
 
   let count = 0;
   let currentTexture;
@@ -238,19 +269,8 @@ gl_FragColor=texture2D(x,v)*vc;}`;
   const flush = () => {
     if (!count) return;
 
-    gl.bufferSubData(
-      gl.ARRAY_BUFFER,
-      0,
-      floatView.subarray(0, count * floatSize),
-    );
-
-    ext.drawElementsInstancedANGLE(
-      gl.TRIANGLES,
-      6,
-      gl.UNSIGNED_SHORT,
-      0,
-      count,
-    );
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, floatView.subarray(0, count * floatSize));
+    ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, count);
 
     count = 0;
   };
@@ -269,6 +289,7 @@ gl_FragColor=texture2D(x,v)*vc;}`;
       currentTexture = tex;
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.uniform1i(textureLocation, tex);
+      gl.uniform1f(alphaTestLocation, tex.alphaTest);
     }
 
     let i = count * floatSize;
@@ -291,12 +312,14 @@ gl_FragColor=texture2D(x,v)*vc;}`;
     floatView[i++] = uvs[3];
     /* eslint-enable prefer-destructuring */
 
-    uintView[i++] = (((sprite.tint & 0xffffff) << 8) | ((sprite.alpha * 255) & 0xff)) >>> 0;
+    uintView[i++] = (((sprite.tint & 0xffffff) << 8) | ((sprite.alpha * 255) & 255)) >>> 0;
+
+    floatView[i++] = -sprite.z;
 
     count++;
   };
 
-  const render = () => {
+  renderer.render = () => {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
@@ -305,11 +328,36 @@ gl_FragColor=texture2D(x,v)*vc;}`;
 
     gl.viewport(0, 0, width, height);
 
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.disable(gl.BLEND);
+    // gl.enable(gl.BLEND);
+    // gl.blendFunc(gl.ONE, gl.ZERO);
 
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
 
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const orthographic = (left, right, bottom, top, near, far) => [
+      2 / (right - left), 0, 0, 0,
+      0, 2 / (top - bottom), 0, 0,
+      0, 0, 2 / (near - far), 0,
+
+      (left + right) / (left - right),
+      (bottom + top) / (bottom - top),
+      (near + far) / (near - far),
+      1,
+    ];
+
+    const projection = orthographic(
+      renderer.offset.x,
+      renderer.offset.x + width,
+      renderer.offset.y + height,
+      renderer.offset.y,
+      65535,
+      -65535,
+    );
+
+    /*
     // prettier-ignore
     const projection = [
       2 / width, 0, 0, 0,
@@ -317,6 +365,7 @@ gl_FragColor=texture2D(x,v)*vc;}`;
       0, 0, 1, 0,
       -1, 1, 0, 1,
     ];
+    */
 
     gl.useProgram(program);
     gl.activeTexture(gl.TEXTURE0);
@@ -325,24 +374,35 @@ gl_FragColor=texture2D(x,v)*vc;}`;
 
     currentTexture = null;
 
-    layers.forEach(l => l.l.iterate(sprite => draw(sprite)));
+    const opaques = new List();
+
+    layers.forEach((l) => {
+      l.l.iterate((sprite) => {
+        if (sprite.alpha !== 1) {
+          opaques.add(sprite);
+        } else {
+          draw(sprite);
+        }
+      });
+    });
+
+    flush();
+
+    gl.enable(gl.BLEND);
+    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthFunc(gl.LEQUAL);
+
+    gl.uniform1f(alphaTestLocation, 1 / 256);
+
+    opaques.iterate(sprite => draw(sprite));
 
     flush();
   };
 
-  render();
+  renderer.render();
 
-  return {
-    gl,
-    bkg(r, g, b) {
-      gl.clearColor(r, g, b, 1);
-    },
-    texture,
-    bitmap,
-    layer,
-    add,
-    render,
-  };
+  return renderer;
 };
 
 Renderer.Sprite = Sprite;

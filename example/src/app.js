@@ -7,7 +7,7 @@ const renderer = Renderer(view);
 const { gl } = renderer;
 // console.log(gl);
 
-renderer.bkg(0.2, 0.2, 0.2, 1);
+renderer.bkg(0.2, 0.2, 0.2, 0);
 
 const atlasImg = () => {
   const canvas = document.createElement('canvas');
@@ -15,6 +15,7 @@ const atlasImg = () => {
   const half = size / 2;
   canvas.width = 96;
   canvas.height = 32;
+  // const ctx = canvas.getContext('2d', { alpha: false });
   const ctx = canvas.getContext('2d');
 
   let offset = 0;
@@ -69,6 +70,7 @@ const atlasImg = () => {
 };
 
 const atlasTex = renderer.texture(atlasImg());
+atlasTex.tex.alphaTest = 0.5;
 
 const bBitmap = renderer.bitmap(atlasTex, 0, 0, 31, 31);
 const qBitmap = renderer.bitmap(atlasTex, 32, 0, 63, 31);
@@ -85,12 +87,11 @@ const addSprite = (l, a) => {
   for (let i = 0; i < a; i++) {
     const s = new Renderer.Sprite(bitmaps[i % 4]);
     s.position = {
-      x: view.width * 0.1 + Math.random() * view.width * 0.8,
-      y: view.height * 0.1 + Math.random() * view.height * 0.8,
+      x: view.width * 0.05 + Math.random() * view.width * 0.9,
+      y: view.height * 0.05 + Math.random() * view.height * 0.9,
     };
     s.scale = { x: 0.5, y: 0.5 };
-    s.anchor = { x: 0.5, y: 0.5 };
-    s.alpha = 0.7;
+    // s.alpha = 0.8;
     s.tint = Math.random() * 0xffffff;
     s.rotation = Math.random() * Math.PI * 2;
     s.dr = (0.5 - Math.random()) * 0.2;

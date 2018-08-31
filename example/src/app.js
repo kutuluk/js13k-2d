@@ -5,9 +5,14 @@ document.body.appendChild(stats.dom);
 const view = document.getElementById('view');
 const renderer = Renderer(view);
 const { gl } = renderer;
-// console.log(gl);
+console.log(gl);
 
 renderer.bkg(0.2, 0.2, 0.2, 0);
+renderer.camera = {
+  at: { x: 400, y: 300 },
+  to: { x: 0.5, y: 0.5 },
+  angle: 0,
+};
 
 const atlasImg = () => {
   const canvas = document.createElement('canvas');
@@ -88,7 +93,7 @@ const logoMask = () => {
 
   const { data } = ctx.getImageData(0, 0, 800, 600);
 
-  return (x, y) => data[(y * 800 + x) * 4] === 255;
+  return (x, y) => data[(y * 800 + x) * 4] > 0;
 };
 
 const atlasTex = renderer.texture(atlasImg());
@@ -130,7 +135,7 @@ const addSprite = (l, a) => {
   }
 };
 
-addSprite(renderer.layer(0), 300);
+addSprite(renderer.layer(0), 1000);
 
 const sprites = document.getElementById('info');
 
@@ -159,11 +164,13 @@ const loop = () => {
 
   if (add) addSprite(add, 25);
 
-  sprites.innerHTML = `Renderer: ${info}</br>Sprites: ${len}`;
+  sprites.innerHTML = `Renderer: ${info}</br>Sprites: ${len} (click to add)`;
 
   sprs.forEach((sprite) => {
     sprite.dr && (sprite.rotation += sprite.dr);
   });
+
+  renderer.camera.angle += 0.005;
 
   renderer.render();
   stats.end();

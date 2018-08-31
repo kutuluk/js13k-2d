@@ -3,7 +3,7 @@
 
 <head>
     <script type="text/javascript" src='stats.min.js'></script>
-    <title>js13k-ecs example</title>
+    <title>js13k-2d example</title>
     <style type="text/css">
         html,
         body,
@@ -19,10 +19,6 @@
             /*
             width: 100vw;
             height: 100vh;
-            */
-            /*
-            width: 800px;
-            height: 600px;
             */
             max-width: 800px;
             max-height: 600px;
@@ -44,12 +40,19 @@
             font-family: monospace;
             font-size: 20px;
         }
+
+        #source {
+            position: absolute;
+            top: 50px;
+            font-size: 20px;
+        }
     </style>
 </head>
 
 <body>
     <canvas id='view'></canvas>
     <div id='info'></div>
+    <div id='source'><a href='https://github.com/kutuluk/js13k-2d'>Source</a></div>
     <script type="text/javascript" src='bundle.js'></script>
 </body>
 

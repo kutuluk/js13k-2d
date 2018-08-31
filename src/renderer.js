@@ -97,13 +97,14 @@ const Renderer = (canvas, options) => {
   const renderer = {
     gl,
 
-    offset: {
-      x: 0,
-      y: 0,
+    camera: {
+      at: { x: 0, y: 0 },
+      to: { x: 0, y: 0 }, // 0 -> 1
+      angle: 0,
     },
 
     bkg(r, g, b, a) {
-      gl.clearColor(r, g, b, a || ((a === 0) ? 0 : 1));
+      gl.clearColor(r, g, b, a || (a === 0 ? 0 : 1));
     },
 
     texture(src, wraps, wrapt, min, mag) {
@@ -167,7 +168,6 @@ const Renderer = (canvas, options) => {
       return l;
     },
   };
-
 
   const zeroLayer = renderer.layer(0);
 
@@ -319,6 +319,18 @@ gl_FragColor=c*i;
     count++;
   };
 
+  // prettier-ignore
+  const orthographic = (left, right, bottom, top, near, far) => [
+    2 / (right - left), 0, 0, 0,
+    0, 2 / (top - bottom), 0, 0,
+    0, 0, 2 / (near - far), 0,
+
+    (left + right) / (left - right),
+    (bottom + top) / (bottom - top),
+    (near + far) / (near - far),
+    1,
+  ];
+
   renderer.render = () => {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
@@ -335,37 +347,55 @@ gl_FragColor=c*i;
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LESS);
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(16384 | 256);
 
-    const orthographic = (left, right, bottom, top, near, far) => [
-      2 / (right - left), 0, 0, 0,
-      0, 2 / (top - bottom), 0, 0,
-      0, 0, 2 / (near - far), 0,
+    const { at, to, angle } = renderer.camera;
 
-      (left + right) / (left - right),
-      (bottom + top) / (bottom - top),
-      (near + far) / (near - far),
-      1,
-    ];
+    const x = at.x - width * to.x;
+    const y = at.y - height * to.y;
 
-    const projection = orthographic(
-      renderer.offset.x,
-      renderer.offset.x + width,
-      renderer.offset.y + height,
-      renderer.offset.y,
-      65535,
-      -65535,
-    );
+    const multiply = (a, b) => {
+      const a00 = a[0];
+      const a11 = a[5];
+      const a22 = a[10];
+      const a30 = a[12];
+      const a31 = a[13];
+      const a32 = a[14];
 
-    /*
+      const b00 = b[0];
+      const b01 = b[1];
+      const b10 = b[4];
+      const b11 = b[5];
+      const b30 = b[12];
+      const b31 = b[13];
+
+      // prettier-ignore
+      return [
+        b00 * a00, b01 * a11, 0, 0,
+        b10 * a00, b11 * a11, 0, 0,
+        0, 0, a22, 0,
+        b30 * a00 + a30, b31 * a11 + a31, a32, 1,
+      ];
+    };
+
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+
+    const ortho = orthographic(x, x + width, y + height, y, 65535, -65535);
+
     // prettier-ignore
-    const projection = [
-      2 / width, 0, 0, 0,
-      0, -2 / height, 0, 0,
+    const rotation = [
+      c, s, 0, 0,
+      -s, c, 0, 0,
       0, 0, 1, 0,
-      -1, 1, 0, 1,
+
+      -at.x * c + -at.y * -s + at.x,
+      -at.x * s + -at.y * c + at.y,
+      0, 1,
     ];
-    */
+
+    const projection = multiply(ortho, rotation);
 
     gl.useProgram(program);
     gl.activeTexture(gl.TEXTURE0);
@@ -374,12 +404,12 @@ gl_FragColor=c*i;
 
     currentTexture = null;
 
-    const opaques = new List();
+    const transparents = new List();
 
     layers.forEach((l) => {
       l.l.iterate((sprite) => {
         if (sprite.alpha !== 1) {
-          opaques.add(sprite);
+          transparents.add(sprite);
         } else {
           draw(sprite);
         }
@@ -391,11 +421,13 @@ gl_FragColor=c*i;
     gl.enable(gl.BLEND);
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.depthFunc(gl.LEQUAL);
+
+    // gl.depthFunc(gl.LEQUAL);
+    gl.depthFunc(515);
 
     gl.uniform1f(alphaTestLocation, 1 / 256);
 
-    opaques.iterate(sprite => draw(sprite));
+    transparents.iterate(sprite => draw(sprite));
 
     flush();
   };

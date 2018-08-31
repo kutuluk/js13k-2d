@@ -319,17 +319,7 @@ gl_FragColor=c*i;
     count++;
   };
 
-  // prettier-ignore
-  const orthographic = (left, right, bottom, top, near, far) => [
-    2 / (right - left), 0, 0, 0,
-    0, 2 / (top - bottom), 0, 0,
-    0, 0, 2 / (near - far), 0,
-
-    (left + right) / (left - right),
-    (bottom + top) / (bottom - top),
-    (near + far) / (near - far),
-    1,
-  ];
+  const depth = 65535;
 
   renderer.render = () => {
     const width = canvas.clientWidth;
@@ -355,47 +345,24 @@ gl_FragColor=c*i;
     const x = at.x - width * to.x;
     const y = at.y - height * to.y;
 
-    const multiply = (a, b) => {
-      const a00 = a[0];
-      const a11 = a[5];
-      const a22 = a[10];
-      const a30 = a[12];
-      const a31 = a[13];
-      const a32 = a[14];
-
-      const b00 = b[0];
-      const b01 = b[1];
-      const b10 = b[4];
-      const b11 = b[5];
-      const b30 = b[12];
-      const b31 = b[13];
-
-      // prettier-ignore
-      return [
-        b00 * a00, b01 * a11, 0, 0,
-        b10 * a00, b11 * a11, 0, 0,
-        0, 0, a22, 0,
-        b30 * a00 + a30, b31 * a11 + a31, a32, 1,
-      ];
-    };
-
     const c = Math.cos(angle);
     const s = Math.sin(angle);
 
-    const ortho = orthographic(x, x + width, y + height, y, 65535, -65535);
+    const a00 = 2 / width;
+    const a11 = 2 / -height;
+    const a30 = (x + x + width) / -width;
+    const a31 = (y + y + height) / height;
 
     // prettier-ignore
-    const rotation = [
-      c, s, 0, 0,
-      -s, c, 0, 0,
-      0, 0, 1, 0,
+    const projection = [
+      c * a00, s * a11, 0, 0,
+      -s * a00, c * a11, 0, 0,
+      0, 0, 2 / (depth + depth), 0,
 
-      -at.x * c + -at.y * -s + at.x,
-      -at.x * s + -at.y * c + at.y,
+      (-at.x * c + -at.y * -s + at.x) * a00 + a30,
+      (-at.x * s + -at.y * c + at.y) * a11 + a31,
       0, 1,
     ];
-
-    const projection = multiply(ortho, rotation);
 
     gl.useProgram(program);
     gl.activeTexture(gl.TEXTURE0);
@@ -420,7 +387,9 @@ gl_FragColor=c*i;
 
     gl.enable(gl.BLEND);
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    // gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(1, 771);
 
     // gl.depthFunc(gl.LEQUAL);
     gl.depthFunc(515);

@@ -5,7 +5,7 @@ document.body.appendChild(stats.dom);
 const view = document.getElementById('view');
 const renderer = Renderer(view);
 const { gl } = renderer;
-console.log(gl);
+// console.log(gl);
 
 renderer.bkg(0.2, 0.2, 0.2, 0);
 renderer.camera = {

@@ -118,19 +118,16 @@ var i = function (t, r) {
     return h.render = function () {
         var e = t.clientWidth, r = t.clientHeight;
         t.width = e, t.height = r, i.viewport(0, 0, e, r), i.disable(i.BLEND), i.enable(i.DEPTH_TEST), i.depthFunc(i.LESS), i.clear(16640);
-        var a, o, u, f, v, l, d, p, m, b, A = h.camera, T = A.at, S = A.to, z = A.angle, L = T.x - e * S.x, D = T.y - r * S.y, N = Math.cos(z), P = Math.sin(z), _ = [2 / ((o = L + e) - (a = L)),
-            0,0,0,0,2 / ((f = D) - (u = D + r)),0,0,0,0,2 / ((v = 65535) - (l = -65535)),
-            0,(a + o) / (a - o),(u + f) / (u - f),(v + l) / (v - l),1], U = [(p = [N,
-            P,0,0,-P,N,0,0,0,0,1,0,-T.x * N + -T.y * -P + T.x,-T.x * P + -T.y * N + T.y,
-            0,1])[0] * (m = (d = _)[0]),p[1] * (b = d[5]),0,0,p[4] * m,p[5] * b,0,
-            0,0,0,d[10],0,p[12] * m + d[12],p[13] * b + d[13],d[14],1];
-        i.useProgram(s), i.activeTexture(i.TEXTURE0), i.uniformMatrix4fv(g, !1, U), x = null;
-        var F = new n();
+        var a = h.camera, o = a.at, u = a.to, f = a.angle, v = o.x - e * u.x, l = o.y - r * u.y, d = Math.cos(f), p = Math.sin(f), m = 2 / e, b = 2 / -r, A = [d * m,
+            p * b,0,0,-p * m,d * b,0,0,0,0,2 / 131070,0,(-o.x * d + -o.y * -p + o.x) * m + (v + v + e) / -e,
+            (-o.x * p + -o.y * d + o.y) * b + (l + l + r) / r,0,1];
+        i.useProgram(s), i.activeTexture(i.TEXTURE0), i.uniformMatrix4fv(g, !1, A), x = null;
+        var T = new n();
         c.forEach(function (t) {
             t.l.iterate(function (t) {
-                1 !== t.alpha ? F.add(t) : E(t);
+                1 !== t.alpha ? T.add(t) : E(t);
             });
-        }), w(), i.enable(i.BLEND), i.blendFunc(i.ONE, i.ONE_MINUS_SRC_ALPHA), i.depthFunc(515), i.uniform1f(y, 1 / 256), F.iterate(function (t) {
+        }), w(), i.enable(i.BLEND), i.blendFunc(1, 771), i.depthFunc(515), i.uniform1f(y, 1 / 256), T.iterate(function (t) {
             return E(t);
         }), w();
     }, h.render(), h;
@@ -142,7 +139,6 @@ document.body.appendChild(stats.dom);
 var view = document.getElementById('view');
 var renderer = i(view);
 var gl = renderer.gl;
-console.log(gl);
 renderer.bkg(0.2, 0.2, 0.2, 0);
 renderer.camera = {
     at: {

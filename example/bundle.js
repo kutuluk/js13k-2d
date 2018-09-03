@@ -1,154 +1,152 @@
 var t = function (t, n) {
-    this.c = t, this.p = null, this.n = n, this.d = !1;
+    this.c = t, this.p = null, this.n = n, this.d = 0;
 };
 t.prototype.r = function () {
-    this.d = !0;
+    this.d = 1;
 };
 var n = function () {
     this.h = null;
 };
 n.prototype.add = function (n) {
-    var e = new t(n, this.h);
-    return this.h && (this.h.p = e), this.h = e, e;
-}, n.prototype.iterate = function (t) {
+    var r = new t(n, this.h);
+    return this.h && (this.h.p = r), this.h = r, r;
+}, n.prototype.i = function (t) {
     var this$1 = this;
 
     for (var n = this.h;n; ) 
         { n.d ? (n.p ? (n.p.n = n.n) : (this$1.h = n.n), n.n && (n.n.p = n.p)) : t(n.c), n = n.n; }
 };
+var r = function (t, n) {
+    this.set(t, n);
+};
+r.prototype.set = function (t, n) {
+    return this.x = t || 0, this.y = n || (0 !== n ? this.x : 0), this;
+}, r.prototype.copy = function (t) {
+    return this.set(t.x, t.y);
+}, r.prototype.clone = function () {
+    return new r(this.x, this.y);
+};
 var e = function (t) {
     this.l = new n(), this.z = t;
 };
 e.prototype.add = function (t) {
-    t.node = this.l.add(t), t.z = this.z;
+    t.n = this.l.add(t), t.z = this.z;
 };
-var r = function (t) {
-    this.bitmap = t, this.anchor = {
-        x: .5,
-        y: .5
-    }, this.position = {
-        x: 0,
-        y: 0
-    }, this.rotation = 0, this.scale = {
-        x: 1,
-        y: 1
-    }, this.tint = 16777215, this.alpha = 1, this.visible = !0, this.node = null;
+var i = function (t) {
+    this.bitmap = t, this.anchor = new r(), this.position = new r(), this.scale = new r(1), this.rotation = 0, this.tint = 16777215, this.alpha = 1, this.visible = !0, this.n = null;
 };
-r.prototype.remove = function () {
-    this.node && this.node.r();
+i.prototype.remove = function () {
+    this.n && this.n.r();
 };
-var i = function (t, r) {
-    var i = t.getContext("webgl", r), a = i.getExtension("ANGLE_instanced_arrays"), o = function (t, n) {
-        var e = i.createShader(n);
-        return i.shaderSource(e, t), i.compileShader(e), e;
-    }, u = function (t, n, e) {
-        var r = i.createBuffer();
-        return i.bindBuffer(t, r), i.bufferData(t, n, e), r;
-    }, c = [], h = {
-        gl: i,
+var a = function (t, i) {
+    var a = t.getContext("webgl", i), o = a.getExtension("ANGLE_instanced_arrays"), u = function (t, n) {
+        var r = a.createShader(n);
+        return a.shaderSource(r, t), a.compileShader(r), r;
+    }, c = function (t, n, r) {
+        var e = a.createBuffer();
+        return a.bindBuffer(t, e), a.bufferData(t, n, r || 35044), e;
+    }, h = [], s = {
+        gl: a,
         camera: {
-            at: {
-                x: 0,
-                y: 0
-            },
-            to: {
-                x: 0,
-                y: 0
-            },
+            at: new r(),
+            to: new r(),
             angle: 0
         },
-        bkg: function (t, n, e, r) {
-            i.clearColor(t, n, e, r || (0 === r ? 0 : 1));
+        bkg: function (t, n, r, e) {
+            void 0 === e && (e = 1), a.clearColor(t, n, r, e);
         },
-        texture: function (t, n, e, r, a) {
-            var o = i.createTexture();
-            return i.bindTexture(3553, o), i.texParameteri(3553, 10242, n || 33071), i.texParameteri(3553, 10243, e || 33071), i.texParameteri(3553, 10240, a || 9729), i.texParameteri(3553, 10241, r || 9729), i.texImage2D(3553, 0, 6408, 6408, 5121, t), o.alphaTest = 1 / 256, {
-                tex: o,
-                width: t.width,
-                height: t.height,
-                uvs: [0,0,1,1]
+        texture: function (t, n, r) {
+            var e = Object.assign({
+                10240: 9729,
+                10241: 9729,
+                10242: 33071,
+                10243: 33071
+            }, r), i = a.createTexture();
+            return a.bindTexture(3553, i), Object.keys(e).forEach(function (t) {
+                return a.texParameteri(3553, t, e[t]);
+            }), a.texImage2D(3553, 0, 6408, 6408, 5121, t), i.a = n || .001, {
+                tex: i,
+                w: t.width,
+                h: t.height,
+                u: [0,0,1,1]
             };
         },
-        bitmap: function (t, n, e, r, i) {
-            var a = r - n + 1, o = i - e + 1;
+        bitmap: function (t, n, r, e, i) {
             return {
                 tex: t.tex,
-                width: a,
-                height: o,
-                uvs: [n / t.width,e / t.height,a / t.width,o / t.height]
+                w: e,
+                h: i,
+                u: [n / t.w,r / t.h,e / t.w,i / t.h]
             };
         },
         layer: function (t) {
-            var n = c.find(function (n) {
+            var n = h.find(function (n) {
                 return n.z === t;
             });
-            if (n) 
-                { return n; }
-            var r = new e(t);
-            return c.push(r), c.sort(function (t, n) {
-                return t.z < n.z ? 1 : t.z > n.z ? -1 : 0;
-            }), r;
+            return n || (n = new e(t), h.push(n), h.sort(function (t, n) {
+                return t.z < n.z ? 1 : -1;
+            })), n;
         }
-    }, f = h.layer(0);
-    h.add = function (t) {
+    }, f = s.layer(0);
+    s.add = function (t) {
         f.add(t);
     };
-    var s = (function (t, n) {
-        var e = o(t, 35633), r = o(n, 35632), a = i.createProgram();
-        return i.attachShader(a, e), i.attachShader(a, r), i.linkProgram(a), a;
-    })("attribute vec2 g;\nattribute vec2 a;\nattribute vec2 t;\nattribute float r;\nattribute vec2 s;\nattribute vec4 u;\nattribute vec4 c;\nattribute float z;\nuniform mat4 m;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nv=u.xy+g*u.zw;\ni=c.abgr;\nvec2 p=(g-a)*s;\nfloat q=cos(r);\nfloat w=sin(r);\np=vec2(p.x*q-p.y*w,p.x*w+p.y*q);\np+=a+t;\ngl_Position=m*vec4(p,z,1);}", "precision mediump float;\nuniform sampler2D x;\nuniform float j;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nvec4 c=texture2D(x,v);\nif(c.a<j)discard;\ngl_FragColor=c*i;\n}"), v = function (t, n, e, r, o, u, c) {
-        var h = i.getAttribLocation(s, t);
-        return i.enableVertexAttribArray(h), i.vertexAttribPointer(h, n, u || i.FLOAT, !(!c), e || 0, o || 0), r && a.vertexAttribDivisorANGLE(h, r), h;
+    var v = (function (t, n) {
+        var r = u(t, 35633), e = u(n, 35632), i = a.createProgram();
+        return a.attachShader(i, r), a.attachShader(i, e), a.linkProgram(i), i;
+    })("attribute vec2 g;\nattribute vec2 a;\nattribute vec2 t;\nattribute float r;\nattribute vec2 s;\nattribute vec4 u;\nattribute vec4 c;\nattribute float z;\nuniform mat4 m;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nv=u.xy+g*u.zw;\ni=c.abgr;\nvec2 p=(g-a)*s;\nfloat q=cos(r);\nfloat w=sin(r);\np=vec2(p.x*q-p.y*w,p.x*w+p.y*q);\np+=a+t;\ngl_Position=m*vec4(p,z,1);}", "precision mediump float;\nuniform sampler2D x;\nuniform float j;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nvec4 c=texture2D(x,v);\nif(c.a<j)discard;\ngl_FragColor=c*i;\n}"), l = function (t, n, r, e, i, u, c) {
+        var h = a.getAttribLocation(v, t);
+        return a.enableVertexAttribArray(h), a.vertexAttribPointer(h, n, u || 5126, !(!c), r || 0, i || 0), e && o.vertexAttribDivisorANGLE(h, e), h;
     };
-    u(34963, new Uint16Array([0,1,2,2,1,3]), 35044), u(34962, new Float32Array([0,
-        0,0,1,1,0,1,1]), 35044), v("g", 2);
-    var l = new ArrayBuffer(3407820), d = new Float32Array(l), p = new Uint32Array(l);
-    u(34962, l, 35048), v("a", 2, 52, 1), v("s", 2, 52, 1, 8), v("r", 1, 52, 1, 16), v("t", 2, 52, 1, 20), v("u", 4, 52, 1, 28), v("c", 4, 52, 1, 44, 5121, !0), v("z", 1, 52, 1, 48);
-    var x, g = i.getUniformLocation(s, "m"), m = i.getUniformLocation(s, "x"), y = i.getUniformLocation(s, "j"), b = 0, w = function () {
-        b && (i.bufferSubData(i.ARRAY_BUFFER, 0, d.subarray(0, 13 * b)), a.drawElementsInstancedANGLE(i.TRIANGLES, 6, i.UNSIGNED_SHORT, 0, b), b = 0);
+    c(34963, new Uint16Array([0,1,2,2,1,3])), c(34962, new Float32Array([0,0,0,1,
+        1,0,1,1])), l("g", 2);
+    var p = new ArrayBuffer(3407820), d = new Float32Array(p), y = new Uint32Array(p);
+    c(34962, p, 35048), l("a", 2, 52, 1), l("s", 2, 52, 1, 8), l("r", 1, 52, 1, 16), l("t", 2, 52, 1, 20), l("u", 4, 52, 1, 28), l("c", 4, 52, 1, 44, 5121, !0), l("z", 1, 52, 1, 48);
+    var x, b = function (t) {
+        return a.getUniformLocation(v, t);
+    }, m = b("m"), g = b("x"), w = b("j"), A = 0, z = function () {
+        A && (a.bufferSubData(34962, 0, d.subarray(0, 13 * A)), o.drawElementsInstancedANGLE(4, 6, 5123, 0, A), A = 0);
     }, E = function (t) {
         if (t.visible) {
-            65535 === b && w();
-            var n = t.bitmap, e = n.tex, r = n.width, a = n.height, o = n.uvs;
-            x !== e && (w(), x = e, i.bindTexture(i.TEXTURE_2D, e), i.uniform1i(m, e), i.uniform1f(y, e.alphaTest));
-            var u = 13 * b;
-            d[u++] = t.anchor.x, d[u++] = t.anchor.y, d[u++] = t.scale.x * r, d[u++] = t.scale.y * a, d[u++] = t.rotation, d[u++] = t.position.x, d[u++] = t.position.y, d[u++] = o[0], d[u++] = o[1], d[u++] = o[2], d[u++] = o[3], p[u++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, d[u++] = -t.z, b++;
+            65535 === A && z();
+            var n = t.bitmap, r = n.tex, e = n.w, i = n.h, o = n.u;
+            x !== r && (z(), x = r, a.bindTexture(3553, r), a.uniform1i(g, r), a.uniform1f(w, r.a));
+            var u = 13 * A;
+            d[u++] = t.anchor.x, d[u++] = t.anchor.y, d[u++] = t.scale.x * e, d[u++] = t.scale.y * i, d[u++] = t.rotation, d[u++] = t.position.x, d[u++] = t.position.y, d[u++] = o[0], d[u++] = o[1], d[u++] = o[2], d[u++] = o[3], y[u++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, d[u++] = -t.z, A++;
         }
     };
-    return h.render = function () {
-        var e = t.clientWidth, r = t.clientHeight;
-        t.width = e, t.height = r, i.viewport(0, 0, e, r), i.disable(i.BLEND), i.enable(i.DEPTH_TEST), i.depthFunc(i.LESS), i.clear(16640);
-        var a = h.camera, o = a.at, u = a.to, f = a.angle, v = o.x - e * u.x, l = o.y - r * u.y, d = Math.cos(f), p = Math.sin(f), m = 2 / e, b = 2 / -r, A = [d * m,
-            p * b,0,0,-p * m,d * b,0,0,0,0,2 / 131070,0,(-o.x * d + -o.y * -p + o.x) * m + (v + v + e) / -e,
-            (-o.x * p + -o.y * d + o.y) * b + (l + l + r) / r,0,1];
-        i.useProgram(s), i.activeTexture(i.TEXTURE0), i.uniformMatrix4fv(g, !1, A), x = null;
-        var T = new n();
-        c.forEach(function (t) {
-            t.l.iterate(function (t) {
-                1 !== t.alpha ? T.add(t) : E(t);
+    return s.render = function () {
+        var r = t.clientWidth, e = t.clientHeight;
+        t.width = r, t.height = e, a.viewport(0, 0, r, e), a.disable(3042), a.enable(2929), a.depthFunc(513), a.clear(16640);
+        var i = s.camera, o = i.at, u = i.to, c = i.angle, f = o.x - r * u.x, l = o.y - e * u.y, p = Math.cos(c), d = Math.sin(c), y = 2 / r, b = -2 / e, g = [p * y,
+            d * b,0,0,-d * y,p * b,0,0,0,0,1e-5,0,(o.x * (1 - p) + o.y * d) * y + -(2 * f + r) / r,
+            (o.y * (1 - p) - o.x * d) * b + (2 * l + e) / e,0,1];
+        a.useProgram(v), a.activeTexture(33984), a.uniformMatrix4fv(m, !1, g), x = null;
+        var A = new n();
+        h.forEach(function (t) {
+            t.l.i(function (t) {
+                1 !== t.alpha ? A.add(t) : E(t);
             });
-        }), w(), i.enable(i.BLEND), i.blendFunc(1, 771), i.depthFunc(515), i.uniform1f(y, 1 / 256), T.iterate(function (t) {
+        }), z(), a.enable(3042), a.blendFunc(1, 771), a.depthFunc(515), a.uniform1f(w, .001), A.i(function (t) {
             return E(t);
-        }), w();
-    }, h.render(), h;
+        }), z();
+    }, s.render(), s;
 };
-i.Sprite = r;
+a.Sprite = i, a.Point = r;
 
+var Point = a.Point;
+var Sprite = a.Sprite;
 var stats = new Stats();
 document.body.appendChild(stats.dom);
 var view = document.getElementById('view');
-var renderer = i(view);
+var renderer = a(view, {
+    antialias: false
+});
 var gl = renderer.gl;
 renderer.bkg(0.2, 0.2, 0.2, 0);
 renderer.camera = {
-    at: {
-        x: 400,
-        y: 300
-    },
-    to: {
-        x: 0.5,
-        y: 0.5
-    },
+    at: new Point(400, 300),
+    to: new Point(0.5),
     angle: 0
 };
 var atlasImg = function () {
@@ -213,33 +211,27 @@ var logoMask = function () {
     var data = ref.data;
     return function (x, y) { return data[(y * 800 + x) * 4] > 0; };
 };
-var atlasTex = renderer.texture(atlasImg());
-atlasTex.tex.alphaTest = 0.5;
-var bBitmap = renderer.bitmap(atlasTex, 0, 0, 31, 31);
-var qBitmap = renderer.bitmap(atlasTex, 32, 0, 63, 31);
-var fBitmap = renderer.bitmap(atlasTex, 64, 0, 95, 31);
+var atlasTex = renderer.texture(atlasImg(), 0.5);
+var bBitmap = renderer.bitmap(atlasTex, 0, 0, 32, 32);
+var qBitmap = renderer.bitmap(atlasTex, 32, 0, 32, 32);
+var fBitmap = renderer.bitmap(atlasTex, 64, 0, 32, 32);
 var bitmaps = [atlasTex,bBitmap,qBitmap,fBitmap];
 var len = 0;
 var sprs = [];
 var mask = logoMask();
-var addSprite = function (l, a) {
-    len += a;
-    for (var i$$1 = 0;i$$1 < a; i$$1++) {
-        var s = new i.Sprite(bitmaps[i$$1 % 4]);
+var addSprite = function (l, a$$1) {
+    len += a$$1;
+    for (var i = 0;i < a$$1; i++) {
+        var s = new Sprite(bitmaps[i % 4]);
         var x = 0;
         var y = 0;
         while (!mask(x, y)) {
             x = ~(~(view.width * Math.random()));
             y = ~(~(view.height * Math.random()));
         }
-        s.position = {
-            x: x,
-            y: y
-        };
-        s.scale = {
-            x: 0.5,
-            y: 0.5
-        };
+        s.anchor = new Point(0.5);
+        s.position = new Point(x, y);
+        s.scale = new Point(0.5);
         s.tint = Math.random() * 0xffffff;
         s.rotation = Math.random() * Math.PI * 2;
         s.dr = (0.5 - Math.random()) * 0.2;

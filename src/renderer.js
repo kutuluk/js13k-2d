@@ -1,5 +1,25 @@
 import List from './list';
 
+class Point {
+  constructor(x, y) {
+    this.set(x, y);
+  }
+
+  set(x, y) {
+    this.x = x || 0;
+    this.y = y || ((y !== 0) ? this.x : 0);
+    return this;
+  }
+
+  copy(p) {
+    return this.set(p.x, p.y);
+  }
+
+  clone() {
+    return new Point(this.x, this.y);
+  }
+}
+
 class Layer {
   constructor(z) {
     this.l = new List();
@@ -7,7 +27,7 @@ class Layer {
   }
 
   add(sprite) {
-    sprite.node = this.l.add(sprite);
+    sprite.n = this.l.add(sprite);
     sprite.z = this.z;
   }
 }
@@ -15,18 +35,18 @@ class Layer {
 class Sprite {
   constructor(bm) {
     this.bitmap = bm;
-    this.anchor = { x: 0.5, y: 0.5 };
-    this.position = { x: 0, y: 0 };
+    this.anchor = new Point();
+    this.position = new Point();
+    this.scale = new Point(1);
     this.rotation = 0;
-    this.scale = { x: 1, y: 1 };
     this.tint = 0xffffff;
     this.alpha = 1;
     this.visible = true;
-    this.node = null;
+    this.n = null;
   }
 
   remove() {
-    this.node && this.node.r();
+    this.n && this.n.r();
   }
 }
 
@@ -88,7 +108,8 @@ const Renderer = (canvas, options) => {
   const createBuffer = (type, src, usage) => {
     const buffer = gl.createBuffer();
     gl.bindBuffer(type, buffer);
-    gl.bufferData(type, src, usage);
+    // gl.bufferData(type, src, usage || gl.STATIC_DRAW);
+    gl.bufferData(type, src, usage || 35044);
     return buffer;
   };
 
@@ -98,72 +119,61 @@ const Renderer = (canvas, options) => {
     gl,
 
     camera: {
-      at: { x: 0, y: 0 },
-      to: { x: 0, y: 0 }, // 0 -> 1
+      at: new Point(),
+      to: new Point(), // 0 -> 1
       angle: 0,
     },
 
-    bkg(r, g, b, a) {
-      gl.clearColor(r, g, b, a || (a === 0 ? 0 : 1));
+    bkg(r, g, b, a = 1) {
+      gl.clearColor(r, g, b, a);
     },
 
-    texture(src, wraps, wrapt, min, mag) {
-      const tex = gl.createTexture();
-      const glTEXTURE2D = 3553;
+    texture(src, alpha, props) {
+      const params = Object.assign({
+        // gl.TEXTURE_MAG_FILTER: gl.LINEAR,
+        10240: 9729,
+        // gl.TEXTURE_MIN_FILTER: gl.LINEAR,
+        10241: 9729,
+        // gl.TEXTURE_WRAP_S: gl.CLAMP_TO_EDGE,
+        10242: 33071,
+        // gl.TEXTURE_WRAP_T: gl.CLAMP_TO_EDGE,
+        10243: 33071,
+      }, props);
 
-      /*
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wraps || gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapt || gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, mag || gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, min || gl.LINEAR);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
-      gl.generateMipmap(gl.TEXTURE_2D);
-      */
-      gl.bindTexture(glTEXTURE2D, tex);
-      gl.texParameteri(glTEXTURE2D, 10242, wraps || 33071);
-      gl.texParameteri(glTEXTURE2D, 10243, wrapt || 33071);
-      gl.texParameteri(glTEXTURE2D, 10240, mag || 9729);
-      gl.texParameteri(glTEXTURE2D, 10241, min || 9729);
-      gl.texImage2D(glTEXTURE2D, 0, 6408, 6408, 5121, src);
+      const tex = gl.createTexture();
+      gl.bindTexture(3553, tex);
+      Object.keys(params).forEach(k => gl.texParameteri(3553, k, params[k]));
+      // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      gl.texImage2D(3553, 0, 6408, 6408, 5121, src);
       // gl.generateMipmap(glTEXTURE2D);
 
-      tex.alphaTest = 1 / 256;
+      tex.a = alpha || 1e-3;
 
       return {
         tex,
-        width: src.width,
-        height: src.height,
-        uvs: [0, 0, 1, 1],
+        w: src.width,
+        h: src.height,
+        u: [0, 0, 1, 1],
       };
     },
 
-    bitmap(tex, left, top, right, bottom) {
-      const width = right - left + 1;
-      const height = bottom - top + 1;
+    bitmap(tex, left, top, width, height) {
       return {
         tex: tex.tex,
-        width,
-        height,
-        uvs: [left / tex.width, top / tex.height, width / tex.width, height / tex.height],
+        w: width,
+        h: height,
+        u: [left / tex.w, top / tex.h, width / tex.w, height / tex.h],
       };
     },
 
     layer(z) {
-      const exist = layers.find(c => c.z === z);
-      if (exist) return exist;
+      let l = layers.find(c => c.z === z);
 
-      const l = new Layer(z);
-      layers.push(l);
-      layers.sort((a, b) => {
-        /*
-        if (a.z < b.z) return -1;
-        if (a.z > b.z) return 1;
-        */
-        if (a.z < b.z) return 1;
-        if (a.z > b.z) return -1;
-        return 0;
-      });
+      if (!l) {
+        l = new Layer(z);
+        layers.push(l);
+        layers.sort((a, b) => (a.z < b.z ? 1 : -1));
+      }
 
       return l;
     },
@@ -215,19 +225,20 @@ gl_FragColor=c*i;
     const location = gl.getAttribLocation(program, name);
     gl.enableVertexAttribArray(location);
 
-    gl.vertexAttribPointer(location, size, type || gl.FLOAT, !!norm, stride || 0, offset || 0);
+    // gl.vertexAttribPointer(location, size, type || gl.FLOAT, !!norm, stride || 0, offset || 0);
+    gl.vertexAttribPointer(location, size, type || 5126, !!norm, stride || 0, offset || 0);
     divisor && ext.vertexAttribDivisorANGLE(location, divisor);
 
     return location;
   };
 
   // indicesBuffer
-  // createBuffer(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 2, 1, 3]), gl.STATIC_DRAW);
-  createBuffer(34963, new Uint16Array([0, 1, 2, 2, 1, 3]), 35044);
+  // createBuffer(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 2, 1, 3]));
+  createBuffer(34963, new Uint16Array([0, 1, 2, 2, 1, 3]));
 
   // vertexBuffer
-  // createBuffer(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]), gl.STATIC_DRAW);
-  createBuffer(34962, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]), 35044);
+  // createBuffer(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]));
+  createBuffer(34962, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]));
 
   // vertexLocation
   bindAttrib('g', 2);
@@ -259,9 +270,16 @@ gl_FragColor=c*i;
   // zLocation
   bindAttrib('z', 1, byteSize, 1, 48);
 
+  /*
   const matrixLocation = gl.getUniformLocation(program, 'm');
   const textureLocation = gl.getUniformLocation(program, 'x');
   const alphaTestLocation = gl.getUniformLocation(program, 'j');
+  */
+
+  const getUniformLocation = name => gl.getUniformLocation(program, name);
+  const matrixLocation = getUniformLocation('m');
+  const textureLocation = getUniformLocation('x');
+  const alphaTestLocation = getUniformLocation('j');
 
   let count = 0;
   let currentTexture;
@@ -269,8 +287,10 @@ gl_FragColor=c*i;
   const flush = () => {
     if (!count) return;
 
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, floatView.subarray(0, count * floatSize));
-    ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, count);
+    // gl.bufferSubData(gl.ARRAY_BUFFER, 0, floatView.subarray(0, count * floatSize));
+    gl.bufferSubData(34962, 0, floatView.subarray(0, count * floatSize));
+    // ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, count);
+    ext.drawElementsInstancedANGLE(4, 6, 5123, 0, count);
 
     count = 0;
   };
@@ -281,15 +301,16 @@ gl_FragColor=c*i;
     if (count === maxBatch) flush();
 
     const {
-      tex, width, height, uvs,
+      tex, w, h, u,
     } = sprite.bitmap;
 
     if (currentTexture !== tex) {
       flush();
       currentTexture = tex;
-      gl.bindTexture(gl.TEXTURE_2D, tex);
+      // gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.bindTexture(3553, tex);
       gl.uniform1i(textureLocation, tex);
-      gl.uniform1f(alphaTestLocation, tex.alphaTest);
+      gl.uniform1f(alphaTestLocation, tex.a);
     }
 
     let i = count * floatSize;
@@ -297,8 +318,8 @@ gl_FragColor=c*i;
     floatView[i++] = sprite.anchor.x;
     floatView[i++] = sprite.anchor.y;
 
-    floatView[i++] = sprite.scale.x * width;
-    floatView[i++] = sprite.scale.y * height;
+    floatView[i++] = sprite.scale.x * w;
+    floatView[i++] = sprite.scale.y * h;
 
     floatView[i++] = sprite.rotation;
 
@@ -306,10 +327,10 @@ gl_FragColor=c*i;
     floatView[i++] = sprite.position.y;
 
     /* eslint-disable prefer-destructuring */
-    floatView[i++] = uvs[0];
-    floatView[i++] = uvs[1];
-    floatView[i++] = uvs[2];
-    floatView[i++] = uvs[3];
+    floatView[i++] = u[0];
+    floatView[i++] = u[1];
+    floatView[i++] = u[2];
+    floatView[i++] = u[3];
     /* eslint-enable prefer-destructuring */
 
     uintView[i++] = (((sprite.tint & 0xffffff) << 8) | ((sprite.alpha * 255) & 255)) >>> 0;
@@ -319,7 +340,7 @@ gl_FragColor=c*i;
     count++;
   };
 
-  const depth = 65535;
+  const depth = 1e+5;
 
   renderer.render = () => {
     const width = canvas.clientWidth;
@@ -330,12 +351,17 @@ gl_FragColor=c*i;
 
     gl.viewport(0, 0, width, height);
 
-    gl.disable(gl.BLEND);
+    // gl.disable(gl.BLEND);
+    gl.disable(3042);
+
     // gl.enable(gl.BLEND);
     // gl.blendFunc(gl.ONE, gl.ZERO);
 
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LESS);
+    // gl.enable(gl.DEPTH_TEST);
+    gl.enable(2929);
+
+    // gl.depthFunc(gl.LESS);
+    gl.depthFunc(513);
 
     // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.clear(16384 | 256);
@@ -349,23 +375,25 @@ gl_FragColor=c*i;
     const s = Math.sin(angle);
 
     const a00 = 2 / width;
-    const a11 = 2 / -height;
-    const a30 = (x + x + width) / -width;
-    const a31 = (y + y + height) / height;
+    const a11 = -2 / height;
+    const a30 = -(2 * x + width) / width;
+    const a31 = (2 * y + height) / height;
 
     // prettier-ignore
     const projection = [
       c * a00, s * a11, 0, 0,
       -s * a00, c * a11, 0, 0,
-      0, 0, 2 / (depth + depth), 0,
+      0, 0, 2 / (2 * depth), 0,
 
-      (-at.x * c + -at.y * -s + at.x) * a00 + a30,
-      (-at.x * s + -at.y * c + at.y) * a11 + a31,
+      (at.x * (1 - c) + at.y * s) * a00 + a30,
+      (at.y * (1 - c) - at.x * s) * a11 + a31,
       0, 1,
     ];
 
     gl.useProgram(program);
-    gl.activeTexture(gl.TEXTURE0);
+
+    // gl.activeTexture(gl.TEXTURE0);
+    gl.activeTexture(33984);
 
     gl.uniformMatrix4fv(matrixLocation, false, projection);
 
@@ -374,7 +402,7 @@ gl_FragColor=c*i;
     const transparents = new List();
 
     layers.forEach((l) => {
-      l.l.iterate((sprite) => {
+      l.l.i((sprite) => {
         if (sprite.alpha !== 1) {
           transparents.add(sprite);
         } else {
@@ -385,7 +413,9 @@ gl_FragColor=c*i;
 
     flush();
 
-    gl.enable(gl.BLEND);
+    // gl.enable(gl.BLEND);
+    gl.enable(3042);
+
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     // gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -394,9 +424,10 @@ gl_FragColor=c*i;
     // gl.depthFunc(gl.LEQUAL);
     gl.depthFunc(515);
 
-    gl.uniform1f(alphaTestLocation, 1 / 256);
+    // gl.uniform1f(alphaTestLocation, 1 / 256);
+    gl.uniform1f(alphaTestLocation, 1e-3);
 
-    transparents.iterate(sprite => draw(sprite));
+    transparents.i(sprite => draw(sprite));
 
     flush();
   };
@@ -407,5 +438,6 @@ gl_FragColor=c*i;
 };
 
 Renderer.Sprite = Sprite;
+Renderer.Point = Point;
 
 export default Renderer;

@@ -3,11 +3,11 @@ class Node {
     this.c = cargo;
     this.p = null;
     this.n = next;
-    this.d = false;
+    this.d = 0;
   }
 
   r() {
-    this.d = true;
+    this.d = 1;
   }
 }
 
@@ -25,7 +25,7 @@ export default class List {
     return node;
   }
 
-  iterate(fn) {
+  i(fn) {
     let node = this.h;
     while (node) {
       if (node.d) {

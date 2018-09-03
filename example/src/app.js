@@ -1,16 +1,17 @@
 import Renderer from '../../dist/renderer.m';
 
+const { Point, Sprite } = Renderer;
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 const view = document.getElementById('view');
-const renderer = Renderer(view);
+const renderer = Renderer(view, { antialias: false });
 const { gl } = renderer;
 // console.log(gl);
 
 renderer.bkg(0.2, 0.2, 0.2, 0);
 renderer.camera = {
-  at: { x: 400, y: 300 },
-  to: { x: 0.5, y: 0.5 },
+  at: new Point(400, 300),
+  to: new Point(0.5),
   angle: 0,
 };
 
@@ -96,12 +97,11 @@ const logoMask = () => {
   return (x, y) => data[(y * 800 + x) * 4] > 0;
 };
 
-const atlasTex = renderer.texture(atlasImg());
-atlasTex.tex.alphaTest = 0.5;
+const atlasTex = renderer.texture(atlasImg(), 0.5);
 
-const bBitmap = renderer.bitmap(atlasTex, 0, 0, 31, 31);
-const qBitmap = renderer.bitmap(atlasTex, 32, 0, 63, 31);
-const fBitmap = renderer.bitmap(atlasTex, 64, 0, 95, 31);
+const bBitmap = renderer.bitmap(atlasTex, 0, 0, 32, 32);
+const qBitmap = renderer.bitmap(atlasTex, 32, 0, 32, 32);
+const fBitmap = renderer.bitmap(atlasTex, 64, 0, 32, 32);
 
 const bitmaps = [atlasTex, bBitmap, qBitmap, fBitmap];
 
@@ -114,7 +114,7 @@ const mask = logoMask();
 const addSprite = (l, a) => {
   len += a;
   for (let i = 0; i < a; i++) {
-    const s = new Renderer.Sprite(bitmaps[i % 4]);
+    const s = new Sprite(bitmaps[i % 4]);
 
     let x = 0;
     let y = 0;
@@ -124,8 +124,9 @@ const addSprite = (l, a) => {
       y = ~~(view.height * Math.random());
     }
 
-    s.position = { x, y };
-    s.scale = { x: 0.5, y: 0.5 };
+    s.anchor = new Point(0.5);
+    s.position = new Point(x, y);
+    s.scale = new Point(0.5);
     // s.alpha = 0.8;
     s.tint = Math.random() * 0xffffff;
     s.rotation = Math.random() * Math.PI * 2;

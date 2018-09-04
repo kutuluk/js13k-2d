@@ -16,25 +16,13 @@ n.prototype.add = function (n) {
     for (var n = this.h;n; ) 
         { n.d ? (n.p ? (n.p.n = n.n) : (this$1.h = n.n), n.n && (n.n.p = n.p)) : t(n.c), n = n.n; }
 };
-var r = function (t, n) {
-    this.set(t, n);
-};
-r.prototype.set = function (t, n) {
-    return this.x = t || 0, this.y = n || (0 !== n ? this.x : 0), this;
-};
-var e = function (t) {
+var r = function (t) {
     this.l = new n(), this.z = t;
 };
-e.prototype.add = function (t) {
+r.prototype.add = function (t) {
     t.n = this.l.add(t), t.z = this.z;
 };
-var i = function (t) {
-    this.bitmap = t, this.anchor = new r(), this.position = new r(), this.scale = new r(1), this.rotation = 0, this.tint = 16777215, this.alpha = 1, this.visible = !0, this.n = null;
-};
-i.prototype.remove = function () {
-    this.n && this.n.r();
-};
-var a = function (t, i) {
+var e = function (t, i) {
     var a = t.getContext("webgl", i), o = a.getExtension("ANGLE_instanced_arrays"), u = function (t, n) {
         var r = a.createShader(n);
         return a.shaderSource(r, t), a.compileShader(r), r;
@@ -44,8 +32,8 @@ var a = function (t, i) {
     }, h = [], s = {
         gl: a,
         camera: {
-            at: new r(),
-            to: new r(),
+            at: new e.Point(),
+            to: new e.Point(),
             angle: 0
         },
         bkg: function (t, n, r, e) {
@@ -79,7 +67,7 @@ var a = function (t, i) {
             var n = h.find(function (n) {
                 return n.z === t;
             });
-            return n || (n = new e(t), h.push(n), h.sort(function (t, n) {
+            return n || (n = new r(t), h.push(n), h.sort(function (t, n) {
                 return n.z - t.z;
             })), n;
         }
@@ -100,13 +88,13 @@ var a = function (t, i) {
     c(34962, p, 35048), l("a", 2, 52, 1), l("s", 2, 52, 1, 8), l("r", 1, 52, 1, 16), l("t", 2, 52, 1, 20), l("u", 4, 52, 1, 28), l("c", 4, 52, 1, 44, 5121, !0), l("z", 1, 52, 1, 48);
     var x, y = function (t) {
         return a.getUniformLocation(v, t);
-    }, m = y("m"), g = y("x"), w = y("j"), A = 0, z = function () {
+    }, m = y("m"), g = y("x"), w = y("j"), A = 0, P = function () {
         A && (a.bufferSubData(34962, 0, d.subarray(0, 13 * A)), o.drawElementsInstancedANGLE(4, 6, 5121, 0, A), A = 0);
-    }, E = function (t) {
+    }, z = function (t) {
         if (t.visible) {
-            65535 === A && z();
+            65535 === A && P();
             var n = t.bitmap, r = n.tex, e = n.w, i = n.h, o = n.u;
-            x !== r && (z(), x = r, a.bindTexture(3553, r), a.uniform1i(g, r), a.uniform1f(w, r.a));
+            x !== r && (P(), x = r, a.bindTexture(3553, r), a.uniform1i(g, r), a.uniform1f(w, r.a));
             var u = 13 * A;
             d[u++] = t.anchor.x, d[u++] = t.anchor.y, d[u++] = t.scale.x * e, d[u++] = t.scale.y * i, d[u++] = t.rotation, d[u++] = t.position.x, d[u++] = t.position.y, d[u++] = o[0], d[u++] = o[1], d[u++] = o[2], d[u++] = o[3], b[u++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, d[u++] = -t.z, A++;
         }
@@ -121,20 +109,36 @@ var a = function (t, i) {
         var A = new n();
         h.forEach(function (t) {
             t.l.i(function (t) {
-                1 !== t.alpha ? A.add(t) : E(t);
+                1 !== t.alpha ? A.add(t) : z(t);
             });
-        }), z(), a.enable(3042), a.blendFunc(1, 771), a.depthFunc(515), a.uniform1f(w, .001), A.i(function (t) {
-            return E(t);
-        }), z();
+        }), P(), a.enable(3042), a.blendFunc(1, 771), a.depthFunc(515), a.uniform1f(w, .001), A.i(function (t) {
+            return z(t);
+        }), P();
     }, s.render(), s;
 };
-a.Sprite = i, a.Point = r;
+e.Point = (function () {
+    function t(t, n) {
+        this.set(t, n);
+    }
+    
+    return t.prototype.set = function (t, n) {
+        return this.x = t || 0, this.y = n || (0 !== n ? this.x : 0), this;
+    }, t;
+})(), e.Sprite = (function () {
+    function t(t) {
+        this.bitmap = t, this.anchor = new e.Point(), this.position = new e.Point(), this.scale = new e.Point(1), this.rotation = 0, this.tint = 16777215, this.alpha = 1, this.visible = !0, this.n = null;
+    }
+    
+    return t.prototype.remove = function () {
+        this.n && this.n.r();
+    }, t;
+})();
 
-var Sprite = a.Sprite;
+var Sprite = e.Sprite;
 var stats = new Stats();
 document.body.appendChild(stats.dom);
 var view = document.getElementById('view');
-var renderer = a(view, {
+var renderer = e(view, {
     antialias: false
 });
 var gl = renderer.gl;
@@ -211,9 +215,9 @@ var bitmaps = [atlasTex,bBitmap,qBitmap,fBitmap];
 var len = 0;
 var sprs = [];
 var mask = logoMask();
-var addSprite = function (l, a$$1) {
-    len += a$$1;
-    for (var i = 0;i < a$$1; i++) {
+var addSprite = function (l, a) {
+    len += a;
+    for (var i = 0;i < a; i++) {
         var s = new Sprite(bitmaps[i % 4]);
         var x = 0;
         var y = 0;

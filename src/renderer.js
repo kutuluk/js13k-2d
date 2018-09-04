@@ -1,17 +1,5 @@
 import List from './list';
 
-class Point {
-  constructor(x, y) {
-    this.set(x, y);
-  }
-
-  set(x, y) {
-    this.x = x || 0;
-    this.y = y || ((y !== 0) ? this.x : 0);
-    return this;
-  }
-}
-
 class Layer {
   constructor(z) {
     this.l = new List();
@@ -21,24 +9,6 @@ class Layer {
   add(sprite) {
     sprite.n = this.l.add(sprite);
     sprite.z = this.z;
-  }
-}
-
-class Sprite {
-  constructor(bm) {
-    this.bitmap = bm;
-    this.anchor = new Point();
-    this.position = new Point();
-    this.scale = new Point(1);
-    this.rotation = 0;
-    this.tint = 0xffffff;
-    this.alpha = 1;
-    this.visible = true;
-    this.n = null;
-  }
-
-  remove() {
-    this.n && this.n.r();
   }
 }
 
@@ -129,8 +99,8 @@ const Renderer = (canvas, options) => {
     gl,
 
     camera: {
-      at: new Point(),
-      to: new Point(), // 0 -> 1
+      at: new Renderer.Point(),
+      to: new Renderer.Point(), // 0 -> 1
       angle: 0,
     },
 
@@ -446,7 +416,34 @@ gl_FragColor=c*i;}`;
   return renderer;
 };
 
-Renderer.Sprite = Sprite;
-Renderer.Point = Point;
+Renderer.Point = class Point {
+  constructor(x, y) {
+    this.set(x, y);
+  }
+
+  set(x, y) {
+    this.x = x || 0;
+    this.y = y || ((y !== 0) ? this.x : 0);
+    return this;
+  }
+};
+
+Renderer.Sprite = class Sprite {
+  constructor(bm) {
+    this.bitmap = bm;
+    this.anchor = new Renderer.Point();
+    this.position = new Renderer.Point();
+    this.scale = new Renderer.Point(1);
+    this.rotation = 0;
+    this.tint = 0xffffff;
+    this.alpha = 1;
+    this.visible = true;
+    this.n = null;
+  }
+
+  remove() {
+    this.n && this.n.r();
+  }
+};
 
 export default Renderer;

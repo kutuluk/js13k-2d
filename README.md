@@ -41,7 +41,7 @@ See example folder. [Live example](https://kutuluk.github.io/js13k-2d).
 
 **This library is under development and should be considered as an unstable. There are no guarantees regarding API stability until the release of version 1.0.**
 
-## `Renderer.Point`
+## Renderer.Point
 
 The Point object represents a location in a two-dimensional coordinate system, where x represents the horizontal axis and y represents the vertical axis. The class provides the minimum functionality.
 
@@ -49,6 +49,8 @@ The Point object represents a location in a two-dimensional coordinate system, w
 
 -   `x` (number, default 0) - position of the point on the x axis
 -   `y` (number, default 0) - position of the point on the y axis
+
+##### Methods
 
 ### `set(x, y): this`
 
@@ -84,9 +86,20 @@ class Vector extends Renderer.Point {
 
     // ...
 }
+
+// And even override Renderer.Point
+// Note: you need to do this before calling Renderer
+Renderer.Point = Vector;
+
+// then
+const renderer = Renderer(canvas);
+console.log(renderer.camera.at instanceof Vector); // true
+console.log(new Renderer.Point() instanceof Vector); // true
+console.log(new Renderer.Sprite(bitmap).position instanceof Vector); // true
+// etc
 ```
 
-## `Renderer.Sprite`
+## Renderer.Sprite
 
 ### `new Renderer.Sprite(bitmap)`
 

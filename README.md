@@ -39,51 +39,56 @@ See example folder. [Live example](https://kutuluk.github.io/js13k-2d).
 
 ## API (in progress)
 
-### `Renderer.Point`
+**This library is under development and should be considered as an unstable. There are no guarantees regarding API stability until the release of version 1.0.**
 
-The Point object represents a location in a two-dimensional coordinate system, where x represents the horizontal axis and y represents the vertical axis. The class provides the minimum functionality. You can inherit from it and supplement it with the necessary vector methods:
+## `Renderer.Point`
+
+The Point object represents a location in a two-dimensional coordinate system, where x represents the horizontal axis and y represents the vertical axis. The class provides the minimum functionality.
+
+### `new Renderer.Point(x, y)`
+
+-   `x` (number, default 0) - position of the point on the x axis
+-   `y` (number, default 0) - position of the point on the y axis
+
+### `set(x, y): this`
+
+Sets the point to a new `x` and `y` position. If `y` is omitted, both `x` and `y` will be set to `x` (default 0).
+
+#### Tip
+
+For a smaller size reduction, you can use this class as the base class for your vector class:
 
 ```javascript
 class Vector extends Renderer.Point {
-    add(point) {
-        this.x += point.x;
-        this.y += point.y;
+    copy(vec) {
+        return this.set(vec.x, vec.y);
+    }
+
+    clone() {
+        return new Vector(this.x, this.y);
+    }
+
+    add(vec) {
+        this.x += vec.x;
+        this.y += vec.y;
         return this;
     }
 
-    cross(point) {
-        return this.x * point.y - this.y * point.x;
+    cross(vec) {
+        return this.x * vec.y - this.y * vec.x;
     }
 
-    dot(point) {
-        return this.x * point.x + this.y * point.y;
+    dot(vec) {
+        return this.x * vec.x + this.y * vec.y;
     }
 
     // ...
 }
 ```
 
-#### `new Renderer.Point(x, y)`
+## `Renderer.Sprite`
 
-`x` - position of the point on the x axis (default `0`)
-
-`y` - position of the point on the y axis (default `0`)
-
-#### `clone(): Renderer.Point`
-
-Creates a clone of this point.
-
-#### `copy(point): this`
-
-Copies `x` and `y` from the given point.
-
-#### `set(x, y): this`
-
-Sets the point to a new `x` and `y` position. If `y` is omitted, both `x` and `y` will be set to `x` (default `0`).
-
-### `Renderer.Sprite`
-
-#### `new Renderer.Sprite(bitmap)`
+### `new Renderer.Sprite(bitmap)`
 
 ##### Properties
 
@@ -117,6 +122,6 @@ The anchor sets the origin point of the texture. The default is `{0,0}` this mea
 
 ##### Methods
 
-#### `remove()`
+### `remove()`
 
 Removes the sprite from the scene.

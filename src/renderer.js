@@ -10,14 +10,6 @@ class Point {
     this.y = y || ((y !== 0) ? this.x : 0);
     return this;
   }
-
-  copy(p) {
-    return this.set(p.x, p.y);
-  }
-
-  clone() {
-    return new Point(this.x, this.y);
-  }
 }
 
 class Layer {
@@ -49,6 +41,27 @@ class Sprite {
     this.n && this.n.r();
   }
 }
+
+const glVERTEXSHADER = 35633;
+const glFRAGMENTSHADER = 35632;
+const glARRAYBUFFER = 34962;
+const glELEMENTARRAYBUFFER = 34963;
+const glSTATICDRAW = 35044;
+const glDYNAMICDRAW = 35048;
+const glRGBA = 6408;
+const glUNSIGNEDBYTE = 5121;
+const glFLOAT = 5126;
+const glTRIANGLES = 4;
+const glDEPTHTEST = 2929;
+const glLESS = 513;
+const glLEQUAL = 515;
+const glBLEND = 3042;
+const glONE = 1;
+const glONEMINUSSRCALPHA = 771;
+const glCOLORBUFFERBIT = 16384;
+const glDEPTHBUFFERBIT = 256;
+const glTEXTURE0 = 33984;
+const glTEXTURE2D = 3553;
 
 const Renderer = (canvas, options) => {
   const gl = canvas.getContext('webgl', options);
@@ -84,10 +97,8 @@ const Renderer = (canvas, options) => {
   };
 
   const createShaderProgram = (vs, fs) => {
-    // const cvs = compileShader(vs, gl.VERTEX_SHADER);
-    // const cfs = compileShader(fs, gl.FRAGMENT_SHADER);
-    const cvs = compileShader(vs, 35633);
-    const cfs = compileShader(fs, 35632);
+    const cvs = compileShader(vs, glVERTEXSHADER);
+    const cfs = compileShader(fs, glFRAGMENTSHADER);
 
     const program = gl.createProgram();
     gl.attachShader(program, cvs);
@@ -108,8 +119,7 @@ const Renderer = (canvas, options) => {
   const createBuffer = (type, src, usage) => {
     const buffer = gl.createBuffer();
     gl.bindBuffer(type, buffer);
-    // gl.bufferData(type, src, usage || gl.STATIC_DRAW);
-    gl.bufferData(type, src, usage || 35044);
+    gl.bufferData(type, src, usage || glSTATICDRAW);
     return buffer;
   };
 
@@ -141,10 +151,9 @@ const Renderer = (canvas, options) => {
       }, props);
 
       const tex = gl.createTexture();
-      gl.bindTexture(3553, tex);
-      Object.keys(params).forEach(k => gl.texParameteri(3553, k, params[k]));
-      // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
-      gl.texImage2D(3553, 0, 6408, 6408, 5121, src);
+      gl.bindTexture(glTEXTURE2D, tex);
+      Object.keys(params).forEach(k => gl.texParameteri(glTEXTURE2D, k, params[k]));
+      gl.texImage2D(glTEXTURE2D, 0, glRGBA, glRGBA, glUNSIGNEDBYTE, src);
       // gl.generateMipmap(glTEXTURE2D);
 
       tex.a = alpha || 1e-3;
@@ -172,7 +181,7 @@ const Renderer = (canvas, options) => {
       if (!l) {
         l = new Layer(z);
         layers.push(l);
-        layers.sort((a, b) => (a.z < b.z ? 1 : -1));
+        layers.sort((a, b) => b.z - a.z);
       }
 
       return l;
@@ -214,8 +223,7 @@ varying vec4 i;
 void main(){
 vec4 c=texture2D(x,v);
 if(c.a<j)discard;
-gl_FragColor=c*i;
-}`;
+gl_FragColor=c*i;}`;
 
   const program = createShaderProgram(vs, fs);
 
@@ -225,20 +233,17 @@ gl_FragColor=c*i;
     const location = gl.getAttribLocation(program, name);
     gl.enableVertexAttribArray(location);
 
-    // gl.vertexAttribPointer(location, size, type || gl.FLOAT, !!norm, stride || 0, offset || 0);
-    gl.vertexAttribPointer(location, size, type || 5126, !!norm, stride || 0, offset || 0);
+    gl.vertexAttribPointer(location, size, type || glFLOAT, !!norm, stride || 0, offset || 0);
     divisor && ext.vertexAttribDivisorANGLE(location, divisor);
 
     return location;
   };
 
   // indicesBuffer
-  // createBuffer(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 2, 1, 3]));
-  createBuffer(34963, new Uint16Array([0, 1, 2, 2, 1, 3]));
+  createBuffer(glELEMENTARRAYBUFFER, new Uint8Array([0, 1, 2, 2, 1, 3]));
 
   // vertexBuffer
-  // createBuffer(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]));
-  createBuffer(34962, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]));
+  createBuffer(glARRAYBUFFER, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]));
 
   // vertexLocation
   bindAttrib('g', 2);
@@ -251,8 +256,7 @@ gl_FragColor=c*i;
   const uintView = new Uint32Array(arrayBuffer);
 
   // dynamicBuffer
-  // createBuffer(gl.ARRAY_BUFFER, arrayBuffer, gl.DYNAMIC_DRAW);
-  createBuffer(34962, arrayBuffer, 35048);
+  createBuffer(glARRAYBUFFER, arrayBuffer, glDYNAMICDRAW);
 
   // anchorLocation
   bindAttrib('a', 2, byteSize, 1);
@@ -265,8 +269,7 @@ gl_FragColor=c*i;
   // uvsLocation
   bindAttrib('u', 4, byteSize, 1, 28);
   // colorLocation
-  // bindAttrib('c', 4, byteSize, 1, 44, gl.UNSIGNED_BYTE, true);
-  bindAttrib('c', 4, byteSize, 1, 44, 5121, true);
+  bindAttrib('c', 4, byteSize, 1, 44, glUNSIGNEDBYTE, true);
   // zLocation
   bindAttrib('z', 1, byteSize, 1, 48);
 
@@ -287,11 +290,8 @@ gl_FragColor=c*i;
   const flush = () => {
     if (!count) return;
 
-    // gl.bufferSubData(gl.ARRAY_BUFFER, 0, floatView.subarray(0, count * floatSize));
-    gl.bufferSubData(34962, 0, floatView.subarray(0, count * floatSize));
-    // ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0, count);
-    ext.drawElementsInstancedANGLE(4, 6, 5123, 0, count);
-
+    gl.bufferSubData(glARRAYBUFFER, 0, floatView.subarray(0, count * floatSize));
+    ext.drawElementsInstancedANGLE(glTRIANGLES, 6, glUNSIGNEDBYTE, 0, count);
     count = 0;
   };
 
@@ -307,8 +307,7 @@ gl_FragColor=c*i;
     if (currentTexture !== tex) {
       flush();
       currentTexture = tex;
-      // gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.bindTexture(3553, tex);
+      gl.bindTexture(glTEXTURE2D, tex);
       gl.uniform1i(textureLocation, tex);
       gl.uniform1f(alphaTestLocation, tex.a);
     }
@@ -349,23 +348,6 @@ gl_FragColor=c*i;
     canvas.width = width;
     canvas.height = height;
 
-    gl.viewport(0, 0, width, height);
-
-    // gl.disable(gl.BLEND);
-    gl.disable(3042);
-
-    // gl.enable(gl.BLEND);
-    // gl.blendFunc(gl.ONE, gl.ZERO);
-
-    // gl.enable(gl.DEPTH_TEST);
-    gl.enable(2929);
-
-    // gl.depthFunc(gl.LESS);
-    gl.depthFunc(513);
-
-    // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.clear(16384 | 256);
-
     const { at, to, angle } = renderer.camera;
 
     const x = at.x - width * to.x;
@@ -374,28 +356,61 @@ gl_FragColor=c*i;
     const c = Math.cos(angle);
     const s = Math.sin(angle);
 
-    const a00 = 2 / width;
-    const a11 = -2 / height;
-    const a30 = -(2 * x + width) / width;
-    const a31 = (2 * y + height) / height;
+    const w = 2 / width;
+    const h = -2 / height;
+
+    /*
+
+    |   1 |    0| 0| 0|
+    |   0 |    1| 0| 0|
+    |   0 |    0| 1| 0|
+    | at.x| at.y| 0| 1|
+
+    x
+
+    |  c| s| 0| 0|
+    | -s| c| 0| 0|
+    |  0| 0| 1| 0|
+    |  0| 0| 0| 1|
+
+    x
+
+    |     1|     0| 0| 0|
+    |     0|     1| 0| 0|
+    |     0|     0| 1| 0|
+    | -at.x| -at.y| 0| 1|
+
+    x
+
+    |     2/width|           0|       0| 0|
+    |           0|   -2/height|       0| 0|
+    |           0|           0| 1/depth| 0|
+    | -2x/width-1| 2y/height+1|       0| 1|
+
+    */
 
     // prettier-ignore
     const projection = [
-      c * a00, s * a11, 0, 0,
-      -s * a00, c * a11, 0, 0,
-      0, 0, 2 / (2 * depth), 0,
+      c * w, s * h, 0, 0,
+      -s * w, c * h, 0, 0,
+      0, 0, 1 / depth, 0,
 
-      (at.x * (1 - c) + at.y * s) * a00 + a30,
-      (at.y * (1 - c) - at.x * s) * a11 + a31,
+      (at.x * (1 - c) + at.y * s) * w - 2 * x / width - 1,
+      (at.y * (1 - c) - at.x * s) * h + 2 * y / height + 1,
       0, 1,
     ];
 
     gl.useProgram(program);
 
-    // gl.activeTexture(gl.TEXTURE0);
-    gl.activeTexture(33984);
-
     gl.uniformMatrix4fv(matrixLocation, false, projection);
+
+    gl.viewport(0, 0, width, height);
+    gl.disable(glBLEND);
+    gl.enable(glDEPTHTEST);
+    gl.depthFunc(glLESS);
+    gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
+    gl.activeTexture(glTEXTURE0);
+
 
     currentTexture = null;
 
@@ -413,18 +428,12 @@ gl_FragColor=c*i;
 
     flush();
 
-    // gl.enable(gl.BLEND);
-    gl.enable(3042);
+    gl.enable(glBLEND);
 
-    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // gl.blendFunc(gl.SRC_ALPHA, glONEMINUSSRCALPHA);
+    gl.blendFunc(glONE, glONEMINUSSRCALPHA);
+    gl.depthFunc(glLEQUAL);
 
-    // gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.blendFunc(1, 771);
-
-    // gl.depthFunc(gl.LEQUAL);
-    gl.depthFunc(515);
-
-    // gl.uniform1f(alphaTestLocation, 1 / 256);
     gl.uniform1f(alphaTestLocation, 1e-3);
 
     transparents.i(sprite => draw(sprite));

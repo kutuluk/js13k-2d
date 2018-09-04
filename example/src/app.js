@@ -1,6 +1,6 @@
 import Renderer from '../../dist/renderer.m';
 
-const { Point, Sprite } = Renderer;
+const { Sprite } = Renderer;
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 const view = document.getElementById('view');
@@ -9,11 +9,9 @@ const { gl } = renderer;
 // console.log(gl);
 
 renderer.bkg(0.2, 0.2, 0.2, 0);
-renderer.camera = {
-  at: new Point(400, 300),
-  to: new Point(0.5),
-  angle: 0,
-};
+
+renderer.camera.at.set(400, 300);
+renderer.camera.to.set(0.5);
 
 const atlasImg = () => {
   const canvas = document.createElement('canvas');
@@ -120,13 +118,13 @@ const addSprite = (l, a) => {
     let y = 0;
 
     while (!mask(x, y)) {
-      x = ~~(view.width * Math.random());
-      y = ~~(view.height * Math.random());
+      x = ~~(800 * Math.random());
+      y = ~~(600 * Math.random());
     }
 
-    s.anchor = new Point(0.5);
-    s.position = new Point(x, y);
-    s.scale = new Point(0.5);
+    s.anchor.set(0.5);
+    s.position.set(x, y);
+    s.scale.set(0.5);
     // s.alpha = 0.8;
     s.tint = Math.random() * 0xffffff;
     s.rotation = Math.random() * Math.PI * 2;

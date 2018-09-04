@@ -21,10 +21,6 @@ var r = function (t, n) {
 };
 r.prototype.set = function (t, n) {
     return this.x = t || 0, this.y = n || (0 !== n ? this.x : 0), this;
-}, r.prototype.copy = function (t) {
-    return this.set(t.x, t.y);
-}, r.prototype.clone = function () {
-    return new r(this.x, this.y);
 };
 var e = function (t) {
     this.l = new n(), this.z = t;
@@ -84,7 +80,7 @@ var a = function (t, i) {
                 return n.z === t;
             });
             return n || (n = new e(t), h.push(n), h.sort(function (t, n) {
-                return t.z < n.z ? 1 : -1;
+                return n.z - t.z;
             })), n;
         }
     }, f = s.layer(0);
@@ -94,34 +90,34 @@ var a = function (t, i) {
     var v = (function (t, n) {
         var r = u(t, 35633), e = u(n, 35632), i = a.createProgram();
         return a.attachShader(i, r), a.attachShader(i, e), a.linkProgram(i), i;
-    })("attribute vec2 g;\nattribute vec2 a;\nattribute vec2 t;\nattribute float r;\nattribute vec2 s;\nattribute vec4 u;\nattribute vec4 c;\nattribute float z;\nuniform mat4 m;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nv=u.xy+g*u.zw;\ni=c.abgr;\nvec2 p=(g-a)*s;\nfloat q=cos(r);\nfloat w=sin(r);\np=vec2(p.x*q-p.y*w,p.x*w+p.y*q);\np+=a+t;\ngl_Position=m*vec4(p,z,1);}", "precision mediump float;\nuniform sampler2D x;\nuniform float j;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nvec4 c=texture2D(x,v);\nif(c.a<j)discard;\ngl_FragColor=c*i;\n}"), l = function (t, n, r, e, i, u, c) {
+    })("attribute vec2 g;\nattribute vec2 a;\nattribute vec2 t;\nattribute float r;\nattribute vec2 s;\nattribute vec4 u;\nattribute vec4 c;\nattribute float z;\nuniform mat4 m;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nv=u.xy+g*u.zw;\ni=c.abgr;\nvec2 p=(g-a)*s;\nfloat q=cos(r);\nfloat w=sin(r);\np=vec2(p.x*q-p.y*w,p.x*w+p.y*q);\np+=a+t;\ngl_Position=m*vec4(p,z,1);}", "precision mediump float;\nuniform sampler2D x;\nuniform float j;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nvec4 c=texture2D(x,v);\nif(c.a<j)discard;\ngl_FragColor=c*i;}"), l = function (t, n, r, e, i, u, c) {
         var h = a.getAttribLocation(v, t);
         return a.enableVertexAttribArray(h), a.vertexAttribPointer(h, n, u || 5126, !(!c), r || 0, i || 0), e && o.vertexAttribDivisorANGLE(h, e), h;
     };
-    c(34963, new Uint16Array([0,1,2,2,1,3])), c(34962, new Float32Array([0,0,0,1,
-        1,0,1,1])), l("g", 2);
-    var p = new ArrayBuffer(3407820), d = new Float32Array(p), y = new Uint32Array(p);
+    c(34963, new Uint8Array([0,1,2,2,1,3])), c(34962, new Float32Array([0,0,0,1,1,
+        0,1,1])), l("g", 2);
+    var p = new ArrayBuffer(3407820), d = new Float32Array(p), b = new Uint32Array(p);
     c(34962, p, 35048), l("a", 2, 52, 1), l("s", 2, 52, 1, 8), l("r", 1, 52, 1, 16), l("t", 2, 52, 1, 20), l("u", 4, 52, 1, 28), l("c", 4, 52, 1, 44, 5121, !0), l("z", 1, 52, 1, 48);
-    var x, b = function (t) {
+    var x, y = function (t) {
         return a.getUniformLocation(v, t);
-    }, m = b("m"), g = b("x"), w = b("j"), A = 0, z = function () {
-        A && (a.bufferSubData(34962, 0, d.subarray(0, 13 * A)), o.drawElementsInstancedANGLE(4, 6, 5123, 0, A), A = 0);
+    }, m = y("m"), g = y("x"), w = y("j"), A = 0, z = function () {
+        A && (a.bufferSubData(34962, 0, d.subarray(0, 13 * A)), o.drawElementsInstancedANGLE(4, 6, 5121, 0, A), A = 0);
     }, E = function (t) {
         if (t.visible) {
             65535 === A && z();
             var n = t.bitmap, r = n.tex, e = n.w, i = n.h, o = n.u;
             x !== r && (z(), x = r, a.bindTexture(3553, r), a.uniform1i(g, r), a.uniform1f(w, r.a));
             var u = 13 * A;
-            d[u++] = t.anchor.x, d[u++] = t.anchor.y, d[u++] = t.scale.x * e, d[u++] = t.scale.y * i, d[u++] = t.rotation, d[u++] = t.position.x, d[u++] = t.position.y, d[u++] = o[0], d[u++] = o[1], d[u++] = o[2], d[u++] = o[3], y[u++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, d[u++] = -t.z, A++;
+            d[u++] = t.anchor.x, d[u++] = t.anchor.y, d[u++] = t.scale.x * e, d[u++] = t.scale.y * i, d[u++] = t.rotation, d[u++] = t.position.x, d[u++] = t.position.y, d[u++] = o[0], d[u++] = o[1], d[u++] = o[2], d[u++] = o[3], b[u++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, d[u++] = -t.z, A++;
         }
     };
     return s.render = function () {
         var r = t.clientWidth, e = t.clientHeight;
-        t.width = r, t.height = e, a.viewport(0, 0, r, e), a.disable(3042), a.enable(2929), a.depthFunc(513), a.clear(16640);
-        var i = s.camera, o = i.at, u = i.to, c = i.angle, f = o.x - r * u.x, l = o.y - e * u.y, p = Math.cos(c), d = Math.sin(c), y = 2 / r, b = -2 / e, g = [p * y,
-            d * b,0,0,-d * y,p * b,0,0,0,0,1e-5,0,(o.x * (1 - p) + o.y * d) * y + -(2 * f + r) / r,
-            (o.y * (1 - p) - o.x * d) * b + (2 * l + e) / e,0,1];
-        a.useProgram(v), a.activeTexture(33984), a.uniformMatrix4fv(m, !1, g), x = null;
+        t.width = r, t.height = e;
+        var i = s.camera, o = i.at, u = i.to, c = i.angle, f = o.x - r * u.x, l = o.y - e * u.y, p = Math.cos(c), d = Math.sin(c), b = 2 / r, y = -2 / e, g = [p * b,
+            d * y,0,0,-d * b,p * y,0,0,0,0,1e-5,0,(o.x * (1 - p) + o.y * d) * b - 2 * f / r - 1,
+            (o.y * (1 - p) - o.x * d) * y + 2 * l / e + 1,0,1];
+        a.useProgram(v), a.uniformMatrix4fv(m, !1, g), a.viewport(0, 0, r, e), a.disable(3042), a.enable(2929), a.depthFunc(513), a.clear(16640), a.activeTexture(33984), x = null;
         var A = new n();
         h.forEach(function (t) {
             t.l.i(function (t) {
@@ -134,7 +130,6 @@ var a = function (t, i) {
 };
 a.Sprite = i, a.Point = r;
 
-var Point = a.Point;
 var Sprite = a.Sprite;
 var stats = new Stats();
 document.body.appendChild(stats.dom);
@@ -144,11 +139,8 @@ var renderer = a(view, {
 });
 var gl = renderer.gl;
 renderer.bkg(0.2, 0.2, 0.2, 0);
-renderer.camera = {
-    at: new Point(400, 300),
-    to: new Point(0.5),
-    angle: 0
-};
+renderer.camera.at.set(400, 300);
+renderer.camera.to.set(0.5);
 var atlasImg = function () {
     var canvas = document.createElement('canvas');
     var size = 32;
@@ -226,12 +218,12 @@ var addSprite = function (l, a$$1) {
         var x = 0;
         var y = 0;
         while (!mask(x, y)) {
-            x = ~(~(view.width * Math.random()));
-            y = ~(~(view.height * Math.random()));
+            x = ~(~(800 * Math.random()));
+            y = ~(~(600 * Math.random()));
         }
-        s.anchor = new Point(0.5);
-        s.position = new Point(x, y);
-        s.scale = new Point(0.5);
+        s.anchor.set(0.5);
+        s.position.set(x, y);
+        s.scale.set(0.5);
         s.tint = Math.random() * 0xffffff;
         s.rotation = Math.random() * Math.PI * 2;
         s.dr = (0.5 - Math.random()) * 0.2;

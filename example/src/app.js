@@ -1,8 +1,10 @@
 import Renderer from '../../dist/renderer.m';
 
-const { Sprite } = Renderer;
+const { Texture, Bitmap, Sprite } = Renderer;
+
 const stats = new Stats();
 document.body.appendChild(stats.dom);
+
 const view = document.getElementById('view');
 const renderer = Renderer(view, { antialias: false });
 const { gl } = renderer;
@@ -19,7 +21,6 @@ const atlasImg = () => {
   const half = size / 2;
   canvas.width = 96;
   canvas.height = 32;
-  // const ctx = canvas.getContext('2d', { alpha: false });
   const ctx = canvas.getContext('2d');
 
   let offset = 0;
@@ -95,11 +96,11 @@ const logoMask = () => {
   return (x, y) => data[(y * 800 + x) * 4] > 0;
 };
 
-const atlasTex = renderer.texture(atlasImg(), 0.5);
+const atlasTex = new Texture(renderer, atlasImg(), 0.5);
 
-const bBitmap = renderer.bitmap(atlasTex, 0, 0, 32, 32);
-const qBitmap = renderer.bitmap(atlasTex, 32, 0, 32, 32);
-const fBitmap = renderer.bitmap(atlasTex, 64, 0, 32, 32);
+const bBitmap = new Bitmap(atlasTex, 0, 0, 32, 32);
+const qBitmap = new Bitmap(atlasTex, 32, 0, 32, 32);
+const fBitmap = new Bitmap(atlasTex, 64, 0, 32, 32);
 
 const bitmaps = [atlasTex, bBitmap, qBitmap, fBitmap];
 
@@ -112,7 +113,7 @@ const mask = logoMask();
 const addSprite = (l, a) => {
   len += a;
   for (let i = 0; i < a; i++) {
-    const s = new Sprite(bitmaps[i % 4]);
+    const sprite = new Sprite(bitmaps[i % 4]);
 
     let x = 0;
     let y = 0;
@@ -122,19 +123,47 @@ const addSprite = (l, a) => {
       y = ~~(600 * Math.random());
     }
 
-    s.anchor.set(0.5);
-    s.position.set(x, y);
-    s.scale.set(0.5);
-    // s.alpha = 0.8;
-    s.tint = Math.random() * 0xffffff;
-    s.rotation = Math.random() * Math.PI * 2;
-    s.dr = (0.5 - Math.random()) * 0.2;
-    sprs.push(s);
-    l.add(s);
+    sprite.anchor.set(0.5);
+    sprite.position.set(x, y);
+    sprite.scale.set(0.5);
+    // sprite.scale.set(2);
+    // sprite.alpha = 0.8;
+    sprite.tint = Math.random() * 0xffffff;
+    sprite.rotation = Math.random() * Math.PI * 2;
+    sprite.dr = (0.5 - Math.random()) * 0.1;
+    sprs.push(sprite);
+    l.add(sprite);
   }
 };
 
 addSprite(renderer.layer(0), 1000);
+
+/*
+const bitmapF = new Bitmap(atlasTex, 64, 0, 32, 32);
+const bitmapFx = bitmapF.clone().flipX();
+const bitmapFy = bitmapF.clone().flipY();
+const bitmapFxy = bitmapFx.clone().flipY();
+
+const spriteF = new Sprite(bitmapF);
+spriteF.scale.set(3);
+spriteF.position.set(100, 200);
+renderer.layer(100).add(spriteF);
+
+const spriteFx = new Sprite(bitmapFx);
+spriteFx.scale.set(3);
+spriteFx.position.set(200, 200);
+renderer.layer(100).add(spriteFx);
+
+const spriteFy = new Sprite(bitmapFy);
+spriteFy.scale.set(3);
+spriteFy.position.set(300, 200);
+renderer.layer(100).add(spriteFy);
+
+const spriteFxy = new Sprite(bitmapFxy);
+spriteFxy.scale.set(3);
+spriteFxy.position.set(400, 200);
+renderer.layer(100).add(spriteFxy);
+*/
 
 const sprites = document.getElementById('info');
 
@@ -157,6 +186,15 @@ view.onmouseup = () => {
 view.ontouchend = () => {
   add = null;
 };
+
+/*
+let stars = '';
+fetch('https://api.github.com/repos/kutuluk/js13k-2d')
+  .then(response => response.json())
+  .then((json) => {
+    stars = json.stargazers_count;
+  });
+*/
 
 const loop = () => {
   stats.begin();

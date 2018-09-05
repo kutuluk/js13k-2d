@@ -1,17 +1,5 @@
 import List from './list';
 
-class Layer {
-  constructor(z) {
-    this.l = new List();
-    this.z = z;
-  }
-
-  add(sprite) {
-    sprite.n = this.l.add(sprite);
-    sprite.z = this.z;
-  }
-}
-
 const glVERTEXSHADER = 35633;
 const glFRAGMENTSHADER = 35632;
 const glARRAYBUFFER = 34962;
@@ -32,6 +20,90 @@ const glCOLORBUFFERBIT = 16384;
 const glDEPTHBUFFERBIT = 256;
 const glTEXTURE0 = 33984;
 const glTEXTURE2D = 3553;
+
+class Texture {
+  constructor(renderer, src, alphaTest, texParameters) {
+    const { gl } = renderer;
+    const params = Object.assign({
+      // gl.TEXTURE_MAG_FILTER: gl.LINEAR,
+      10240: 9729,
+      // gl.TEXTURE_MIN_FILTER: gl.LINEAR,
+      10241: 9729,
+      // gl.TEXTURE_WRAP_S: gl.CLAMP_TO_EDGE,
+      10242: 33071,
+      // gl.TEXTURE_WRAP_T: gl.CLAMP_TO_EDGE,
+      10243: 33071,
+    }, texParameters);
+
+    this.tex = gl.createTexture();
+    gl.bindTexture(glTEXTURE2D, this.tex);
+    Object.keys(params).forEach(k => gl.texParameteri(glTEXTURE2D, k, params[k]));
+    gl.texImage2D(glTEXTURE2D, 0, glRGBA, glRGBA, glUNSIGNEDBYTE, src);
+    // gl.generateMipmap(glTEXTURE2D);
+
+    this.alphaTest = alphaTest || 1;
+    this.width = src.width;
+    this.height = src.height;
+    this.u = [0, 0, 1, 1];
+  }
+
+  flipX() {
+    const { u } = this;
+    this.u = [u[0] + u[2], u[1], -u[2], u[3]];
+    return this;
+  }
+
+  flipY() {
+    const { u } = this;
+    this.u = [u[0], u[1] + u[3], u[2], -u[3]];
+    return this;
+  }
+}
+
+/* eslint-disable constructor-super */
+/* eslint-disable no-this-before-super */
+class Bitmap extends Texture {
+  constructor(texture, left, top, width, height) {
+    this.texture = texture;
+    this.width = width;
+    this.height = height;
+    this.u = [
+      left / texture.width,
+      top / texture.height,
+      width / texture.width,
+      height / texture.height,
+    ];
+  }
+
+  get alphaTest() {
+    return this.texture.alphaTest;
+  }
+
+  get tex() {
+    return this.texture.tex;
+  }
+
+  clone() {
+    const b = new Bitmap({});
+    Object.assign(b, this);
+    b.u = b.u.slice();
+    return b;
+  }
+}
+/* eslint-enable constructor-super */
+/* eslint-enable no-this-before-super */
+
+class Layer {
+  constructor(z) {
+    this.l = new List();
+    this.z = z;
+  }
+
+  add(sprite) {
+    sprite.n = this.l.add(sprite);
+    sprite.z = this.z;
+  }
+}
 
 const Renderer = (canvas, options) => {
   const gl = canvas.getContext('webgl', options);
@@ -108,43 +180,6 @@ const Renderer = (canvas, options) => {
       gl.clearColor(r, g, b, a);
     },
 
-    texture(src, alpha, props) {
-      const params = Object.assign({
-        // gl.TEXTURE_MAG_FILTER: gl.LINEAR,
-        10240: 9729,
-        // gl.TEXTURE_MIN_FILTER: gl.LINEAR,
-        10241: 9729,
-        // gl.TEXTURE_WRAP_S: gl.CLAMP_TO_EDGE,
-        10242: 33071,
-        // gl.TEXTURE_WRAP_T: gl.CLAMP_TO_EDGE,
-        10243: 33071,
-      }, props);
-
-      const tex = gl.createTexture();
-      gl.bindTexture(glTEXTURE2D, tex);
-      Object.keys(params).forEach(k => gl.texParameteri(glTEXTURE2D, k, params[k]));
-      gl.texImage2D(glTEXTURE2D, 0, glRGBA, glRGBA, glUNSIGNEDBYTE, src);
-      // gl.generateMipmap(glTEXTURE2D);
-
-      tex.a = alpha || 1e-3;
-
-      return {
-        tex,
-        w: src.width,
-        h: src.height,
-        u: [0, 0, 1, 1],
-      };
-    },
-
-    bitmap(tex, left, top, width, height) {
-      return {
-        tex: tex.tex,
-        w: width,
-        h: height,
-        u: [left / tex.w, top / tex.h, width / tex.w, height / tex.h],
-      };
-    },
-
     layer(z) {
       let l = layers.find(c => c.z === z);
 
@@ -192,8 +227,11 @@ varying vec2 v;
 varying vec4 i;
 void main(){
 vec4 c=texture2D(x,v);
+gl_FragColor=c*i;
+if(j>0.0){
 if(c.a<j)discard;
-gl_FragColor=c*i;}`;
+gl_FragColor.a=1.0;
+};}`;
 
   const program = createShaderProgram(vs, fs);
 
@@ -243,12 +281,6 @@ gl_FragColor=c*i;}`;
   // zLocation
   bindAttrib('z', 1, byteSize, 1, 48);
 
-  /*
-  const matrixLocation = gl.getUniformLocation(program, 'm');
-  const textureLocation = gl.getUniformLocation(program, 'x');
-  const alphaTestLocation = gl.getUniformLocation(program, 'j');
-  */
-
   const getUniformLocation = name => gl.getUniformLocation(program, name);
   const matrixLocation = getUniformLocation('m');
   const textureLocation = getUniformLocation('x');
@@ -256,6 +288,7 @@ gl_FragColor=c*i;}`;
 
   let count = 0;
   let currentTexture;
+  let alphaTestMode;
 
   const flush = () => {
     if (!count) return;
@@ -271,29 +304,31 @@ gl_FragColor=c*i;}`;
     if (count === maxBatch) flush();
 
     const {
-      tex, w, h, u,
-    } = sprite.bitmap;
+      bitmap, scale, position, anchor,
+    } = sprite;
+
+    const { tex, u } = bitmap;
 
     if (currentTexture !== tex) {
       flush();
       currentTexture = tex;
       gl.bindTexture(glTEXTURE2D, tex);
       gl.uniform1i(textureLocation, tex);
-      gl.uniform1f(alphaTestLocation, tex.a);
+      gl.uniform1f(alphaTestLocation, alphaTestMode ? bitmap.alphaTest : 0);
     }
 
     let i = count * floatSize;
 
-    floatView[i++] = sprite.anchor.x;
-    floatView[i++] = sprite.anchor.y;
+    floatView[i++] = anchor.x;
+    floatView[i++] = anchor.y;
 
-    floatView[i++] = sprite.scale.x * w;
-    floatView[i++] = sprite.scale.y * h;
+    floatView[i++] = scale.x * bitmap.width;
+    floatView[i++] = scale.y * bitmap.height;
 
     floatView[i++] = sprite.rotation;
 
-    floatView[i++] = sprite.position.x;
-    floatView[i++] = sprite.position.y;
+    floatView[i++] = position.x;
+    floatView[i++] = position.y;
 
     /* eslint-disable prefer-destructuring */
     floatView[i++] = u[0];
@@ -381,33 +416,29 @@ gl_FragColor=c*i;}`;
     gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
     gl.activeTexture(glTEXTURE0);
 
-
-    currentTexture = null;
-
     const transparents = new List();
 
+    currentTexture = null;
+    alphaTestMode = true;
     layers.forEach((l) => {
       l.l.i((sprite) => {
-        if (sprite.alpha !== 1) {
+        if ((sprite.alpha !== 1) || (sprite.bitmap.alphaTest === 0)) {
           transparents.add(sprite);
         } else {
           draw(sprite);
         }
       });
     });
-
     flush();
 
     gl.enable(glBLEND);
-
     // gl.blendFunc(gl.SRC_ALPHA, glONEMINUSSRCALPHA);
     gl.blendFunc(glONE, glONEMINUSSRCALPHA);
     gl.depthFunc(glLEQUAL);
 
-    gl.uniform1f(alphaTestLocation, 1e-3);
-
+    gl.uniform1f(alphaTestLocation, 0);
+    alphaTestMode = false;
     transparents.i(sprite => draw(sprite));
-
     flush();
   };
 
@@ -429,8 +460,8 @@ Renderer.Point = class Point {
 };
 
 Renderer.Sprite = class Sprite {
-  constructor(bm) {
-    this.bitmap = bm;
+  constructor(bitmap) {
+    this.bitmap = bitmap;
     this.anchor = new Renderer.Point();
     this.position = new Renderer.Point();
     this.scale = new Renderer.Point(1);
@@ -445,5 +476,8 @@ Renderer.Sprite = class Sprite {
     this.n && this.n.r();
   }
 };
+
+Renderer.Texture = Texture;
+Renderer.Bitmap = Bitmap;
 
 export default Renderer;

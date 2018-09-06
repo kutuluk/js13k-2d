@@ -162,7 +162,7 @@ WebGL texture ID.
 
 The Texture object stores the information that represents part of an image. It cannot be added to the display list directly. Instead use it as the texture for a Sprite.
 
-You can directly create a bitmap from an texrure and then reuse it multiple times like this:
+You can directly create a bitmap from an texture and then reuse it multiple times like this:
 
 ```javascript
 const renderer = Renderer(view);

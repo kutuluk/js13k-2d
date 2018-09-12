@@ -1,16 +1,18 @@
 import Renderer from '../../dist/renderer.m';
 
-const { Texture, Bitmap, Sprite } = Renderer;
+const {
+  Point, Texture, Frame, Sprite,
+} = Renderer;
 
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 
 const view = document.getElementById('view');
-const renderer = Renderer(view, { antialias: false });
+const renderer = Renderer(view);
 const { gl } = renderer;
 // console.log(gl);
 
-renderer.bkg(0.2, 0.2, 0.2, 0);
+renderer.background(1, 1, 1);
 
 renderer.camera.at.set(400, 300);
 renderer.camera.to.set(0.5);
@@ -96,13 +98,14 @@ const logoMask = () => {
   return (x, y) => data[(y * 800 + x) * 4] > 0;
 };
 
-const atlasTex = new Texture(renderer, atlasImg(), 0.5);
+const atlas = Texture(renderer, atlasImg(), 0.5);
+atlas.anchor = Point(0.5);
 
-const bBitmap = new Bitmap(atlasTex, 0, 0, 32, 32);
-const qBitmap = new Bitmap(atlasTex, 32, 0, 32, 32);
-const fBitmap = new Bitmap(atlasTex, 64, 0, 32, 32);
+const bFrame = Frame(atlas, Point(), Point(32));
+const qFrame = Frame(atlas, Point(32, 0), Point(32));
+const fFrame = Frame(atlas, Point(64, 0), Point(32));
 
-const bitmaps = [atlasTex, bBitmap, qBitmap, fBitmap];
+const frames = [atlas, bFrame, qFrame, fFrame];
 
 let len = 0;
 
@@ -110,10 +113,18 @@ const sprs = [];
 
 const mask = logoMask();
 
-const addSprite = (l, a) => {
+let cl = 0;
+
+const addSprite = (a) => {
+  if (len % 250 === 0) {
+    cl++;
+  }
+
+  const layer = renderer.layer(cl);
+
   len += a;
   for (let i = 0; i < a; i++) {
-    const sprite = new Sprite(bitmaps[i % 4]);
+    const sprite = Sprite(frames[i % 4]);
 
     let x = 0;
     let y = 0;
@@ -123,88 +134,52 @@ const addSprite = (l, a) => {
       y = ~~(600 * Math.random());
     }
 
-    sprite.anchor.set(0.5);
     sprite.position.set(x, y);
     sprite.scale.set(0.5);
-    // sprite.scale.set(2);
-    // sprite.alpha = 0.8;
     sprite.tint = Math.random() * 0xffffff;
     sprite.rotation = Math.random() * Math.PI * 2;
     sprite.dr = (0.5 - Math.random()) * 0.1;
+    sprite.trans = !Math.round(Math.random());
     sprs.push(sprite);
-    l.add(sprite);
+    layer.add(sprite);
   }
 };
 
-addSprite(renderer.layer(0), 1000);
-
-/*
-const bitmapF = new Bitmap(atlasTex, 64, 0, 32, 32);
-const bitmapFx = bitmapF.clone().flipX();
-const bitmapFy = bitmapF.clone().flipY();
-const bitmapFxy = bitmapFx.clone().flipY();
-
-const spriteF = new Sprite(bitmapF);
-spriteF.scale.set(3);
-spriteF.position.set(100, 200);
-renderer.layer(100).add(spriteF);
-
-const spriteFx = new Sprite(bitmapFx);
-spriteFx.scale.set(3);
-spriteFx.position.set(200, 200);
-renderer.layer(100).add(spriteFx);
-
-const spriteFy = new Sprite(bitmapFy);
-spriteFy.scale.set(3);
-spriteFy.position.set(300, 200);
-renderer.layer(100).add(spriteFy);
-
-const spriteFxy = new Sprite(bitmapFxy);
-spriteFxy.scale.set(3);
-spriteFxy.position.set(400, 200);
-renderer.layer(100).add(spriteFxy);
-*/
+addSprite(1000);
 
 const sprites = document.getElementById('info');
 
 const dbgRenderInfo = gl.getExtension('WEBGL_debug_renderer_info');
 const info = gl.getParameter(dbgRenderInfo ? dbgRenderInfo.UNMASKED_RENDERER_WEBGL : gl.VENDOR);
 
-let add = null;
+let add = false;
 
-let l = 1;
 view.onmousedown = () => {
-  add = renderer.layer(l++);
+  add = true;
 };
 view.ontouchstart = () => {
-  add = renderer.layer(l++);
+  add = true;
 };
 
 view.onmouseup = () => {
-  add = null;
+  add = false;
 };
 view.ontouchend = () => {
-  add = null;
+  add = false;
 };
-
-/*
-let stars = '';
-fetch('https://api.github.com/repos/kutuluk/js13k-2d')
-  .then(response => response.json())
-  .then((json) => {
-    stars = json.stargazers_count;
-  });
-*/
 
 const loop = () => {
   stats.begin();
 
-  if (add) addSprite(add, 25);
+  if (add) addSprite(25);
 
   sprites.innerHTML = `Renderer: ${info}</br>Sprites: ${len} (click to add)`;
 
   sprs.forEach((sprite) => {
     sprite.dr && (sprite.rotation += sprite.dr);
+    if (sprite.trans && sprite.alpha > 0.6) {
+      sprite.alpha -= 0.001;
+    }
   });
 
   renderer.camera.angle += 0.005;

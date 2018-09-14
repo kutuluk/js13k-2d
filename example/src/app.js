@@ -8,14 +8,15 @@ const stats = new Stats();
 document.body.appendChild(stats.dom);
 
 const view = document.getElementById('view');
-const renderer = Renderer(view);
-const { gl } = renderer;
+// const scene = Renderer(view, { alpha: true });
+const scene = Renderer(view);
+const { gl } = scene;
 // console.log(gl);
 
-renderer.background(1, 1, 1);
+scene.background(1, 1, 1, 0);
 
-renderer.camera.at.set(400, 300);
-renderer.camera.to.set(0.5);
+scene.camera.at.set(400, 300);
+scene.camera.to.set(0.5);
 
 const atlasImg = () => {
   const canvas = document.createElement('canvas');
@@ -98,7 +99,7 @@ const logoMask = () => {
   return (x, y) => data[(y * 800 + x) * 4] > 0;
 };
 
-const atlas = Texture(renderer, atlasImg(), 0.5);
+const atlas = Texture(scene, atlasImg(), 0.5);
 atlas.anchor = Point(0.5);
 
 const bFrame = Frame(atlas, Point(), Point(32));
@@ -120,7 +121,7 @@ const addSprite = (a) => {
     cl++;
   }
 
-  const layer = renderer.layer(cl);
+  const layer = scene.layer(cl);
 
   len += a;
   for (let i = 0; i < a; i++) {
@@ -144,8 +145,6 @@ const addSprite = (a) => {
     layer.add(sprite);
   }
 };
-
-addSprite(1000);
 
 const sprites = document.getElementById('info');
 
@@ -171,20 +170,20 @@ view.ontouchend = () => {
 const loop = () => {
   stats.begin();
 
-  if (add) addSprite(25);
+  if (len < 3000 || add) addSprite(25);
 
   sprites.innerHTML = `Renderer: ${info}</br>Sprites: ${len} (click to add)`;
 
   sprs.forEach((sprite) => {
     sprite.dr && (sprite.rotation += sprite.dr);
-    if (sprite.trans && sprite.alpha > 0.6) {
+    if (sprite.trans && sprite.alpha > 0.4) {
       sprite.alpha -= 0.001;
     }
   });
 
-  renderer.camera.angle += 0.005;
+  scene.camera.angle += 0.005;
 
-  renderer.render();
+  scene.render();
   stats.end();
 
   requestAnimationFrame(loop);

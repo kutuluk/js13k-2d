@@ -14,6 +14,7 @@ const glDEPTHTEST = 2929;
 const glLESS = 513;
 const glLEQUAL = 515;
 const glBLEND = 3042;
+const glONE = 1;
 const glSRCALPHA = 770;
 const glONEMINUSSRCALPHA = 771;
 const glCOLORBUFFERBIT = 16384;
@@ -23,7 +24,43 @@ const glTEXTURE2D = 3553;
 const glNEAREST = 9728;
 const glCLAMPTOEDGE = 33071;
 
-const transparent = sprite => sprite.a !== 1 || sprite.frame.alphaTest === 0;
+const vs = `attribute vec2 g;
+attribute vec2 a;
+attribute vec2 t;
+attribute float r;
+attribute vec2 s;
+attribute vec4 u;
+attribute vec4 c;
+attribute float z;
+uniform mat4 m;
+varying vec2 v;
+varying vec4 i;
+void main(){
+v=u.xy+g*u.zw;
+i=c.abgr;
+vec2 p=(g-a)*s;
+float q=cos(r);
+float w=sin(r);
+p=vec2(p.x*q-p.y*w,p.x*w+p.y*q);
+p+=a+t;
+gl_Position=m*vec4(p,z,1);}`;
+
+const fs = `precision mediump float;
+uniform sampler2D x;
+uniform float j;
+varying vec2 v;
+varying vec4 i;
+void main(){
+vec4 c=texture2D(x,v);
+gl_FragColor=c*i;
+if(j>0.0){
+if(c.a<j)discard;
+gl_FragColor.a=1.0;};}`;
+
+const maxBatch = 65535;
+const depth = 1e5;
+
+const transparent = sprite => sprite.alpha !== 1 || sprite.frame.atest === 0;
 
 class Layer {
   constructor(z) {
@@ -41,7 +78,10 @@ class Layer {
 }
 
 const Renderer = (canvas, options) => {
-  const gl = canvas.getContext('webgl', Object.assign({ antialias: false, alpha: false }, options));
+  const opts = Object.assign({ antialias: false, alpha: false }, options);
+  const blend = opts.alpha ? glONE : glSRCALPHA;
+
+  const gl = canvas.getContext('webgl', opts);
 
   /*
   if (!gl) {
@@ -73,25 +113,18 @@ const Renderer = (canvas, options) => {
     return shader;
   };
 
-  const createShaderProgram = (vs, fs) => {
-    const cvs = compileShader(vs, glVERTEXSHADER);
-    const cfs = compileShader(fs, glFRAGMENTSHADER);
+  const program = gl.createProgram();
+  gl.attachShader(program, compileShader(vs, glVERTEXSHADER));
+  gl.attachShader(program, compileShader(fs, glFRAGMENTSHADER));
+  gl.linkProgram(program);
 
-    const program = gl.createProgram();
-    gl.attachShader(program, cvs);
-    gl.attachShader(program, cfs);
-    gl.linkProgram(program);
-
-    /*
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      const error = gl.getProgramInfoLog(program);
-      gl.deleteProgram(program);
-      throw new Error(error);
-    }
-    */
-
-    return program;
-  };
+  /*
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const error = gl.getProgramInfoLog(program);
+    gl.deleteProgram(program);
+    throw new Error(error);
+  }
+  */
 
   const createBuffer = (type, src, usage) => {
     const buffer = gl.createBuffer();
@@ -99,77 +132,6 @@ const Renderer = (canvas, options) => {
     gl.bufferData(type, src, usage || glSTATICDRAW);
     return buffer;
   };
-
-  const layers = [];
-
-  const renderer = {
-    gl,
-
-    camera: {
-      at: Renderer.Point(),
-      to: Renderer.Point(), // 0 -> 1
-      angle: 0,
-    },
-
-    background(r, g, b) {
-      gl.clearColor(r, g, b, 1);
-    },
-
-    layer(z) {
-      let l = layers.find(layer => layer.z === z);
-
-      if (!l) {
-        l = new Layer(z);
-        layers.push(l);
-        layers.sort((a, b) => b.z - a.z);
-      }
-
-      return l;
-    },
-  };
-
-  const zeroLayer = renderer.layer(0);
-
-  renderer.add = (sprite) => {
-    zeroLayer.add(sprite);
-  };
-
-  const vs = `attribute vec2 g;
-attribute vec2 a;
-attribute vec2 t;
-attribute float r;
-attribute vec2 s;
-attribute vec4 u;
-attribute vec4 c;
-attribute float z;
-uniform mat4 m;
-varying vec2 v;
-varying vec4 i;
-void main(){
-v=u.xy+g*u.zw;
-i=c.abgr;
-vec2 p=(g-a)*s;
-float q=cos(r);
-float w=sin(r);
-p=vec2(p.x*q-p.y*w,p.x*w+p.y*q);
-p+=a+t;
-gl_Position=m*vec4(p,z,1);}`;
-
-  const fs = `precision mediump float;
-uniform sampler2D x;
-uniform float j;
-varying vec2 v;
-varying vec4 i;
-void main(){
-vec4 c=texture2D(x,v);
-gl_FragColor=c*i;
-if(j>0.0){
-if(c.a<j)discard;
-gl_FragColor.a=1.0;};}`;
-
-  const program = createShaderProgram(vs, fs);
-
-  const maxBatch = 65535;
 
   const bindAttrib = (name, size, stride, divisor, offset, type, norm) => {
     const location = gl.getAttribLocation(program, name);
@@ -238,7 +200,7 @@ gl_FragColor.a=1.0;};}`;
     if (count === maxBatch) flush();
 
     const { frame, scale, position } = sprite;
-    const { tex, uvs } = frame;
+    const { tex, size, uvs } = frame;
     const anchor = sprite.anchor || frame.anchor;
 
     if (currentTexture !== tex) {
@@ -246,7 +208,7 @@ gl_FragColor.a=1.0;};}`;
       currentTexture = tex;
       gl.bindTexture(glTEXTURE2D, tex);
       gl.uniform1i(textureLocation, tex);
-      gl.uniform1f(alphaTestLocation, alphaTestMode ? frame.alphaTest : 0);
+      gl.uniform1f(alphaTestLocation, alphaTestMode ? frame.atest : 0);
     }
 
     let i = count * floatSize;
@@ -254,8 +216,8 @@ gl_FragColor.a=1.0;};}`;
     floatView[i++] = anchor.x;
     floatView[i++] = anchor.y;
 
-    floatView[i++] = scale.x * frame.width;
-    floatView[i++] = scale.y * frame.height;
+    floatView[i++] = scale.x * size.x;
+    floatView[i++] = scale.y * size.y;
 
     floatView[i++] = sprite.rotation;
 
@@ -269,102 +231,131 @@ gl_FragColor.a=1.0;};}`;
     floatView[i++] = uvs[3];
     /* eslint-enable prefer-destructuring */
 
-    uintView[i++] = (((sprite.tint & 0xffffff) << 8) | ((sprite.a * 255) & 255)) >>> 0;
+    uintView[i++] = (((sprite.tint & 0xffffff) << 8) | ((sprite.alpha * 255) & 255)) >>> 0;
 
-    floatView[i++] = -sprite.layer.z;
+    floatView[i++] = sprite.layer.z;
 
     count++;
   };
 
-  const depth = 1e5;
+  const zeroLayer = new Layer(0);
+  const layers = [zeroLayer];
 
-  renderer.render = () => {
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+  const renderer = {
+    gl,
 
-    canvas.width = width;
-    canvas.height = height;
+    camera: {
+      at: Renderer.Point(),
+      to: Renderer.Point(), // 0 -> 1
+      angle: 0,
+    },
 
-    const { at, to, angle } = renderer.camera;
+    background(r, g, b, a = 1) {
+      gl.clearColor(r, g, b, a);
+    },
 
-    const x = at.x - width * to.x;
-    const y = at.y - height * to.y;
+    layer(z) {
+      let l = layers.find(layer => layer.z === z);
 
-    const c = Math.cos(angle);
-    const s = Math.sin(angle);
+      if (!l) {
+        l = new Layer(z);
+        layers.push(l);
+        layers.sort((a, b) => b.z - a.z);
+      }
 
-    const w = 2 / width;
-    const h = -2 / height;
+      return l;
+    },
 
-    /*
+    add(sprite) {
+      zeroLayer.add(sprite);
+    },
 
-    |   1 |    0| 0| 0|
-    |   0 |    1| 0| 0|
-    |   0 |    0| 1| 0|
-    | at.x| at.y| 0| 1|
+    render() {
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
 
-    x
+      canvas.width = width;
+      canvas.height = height;
 
-    |  c| s| 0| 0|
-    | -s| c| 0| 0|
-    |  0| 0| 1| 0|
-    |  0| 0| 0| 1|
+      const { at, to, angle } = renderer.camera;
 
-    x
+      const x = at.x - width * to.x;
+      const y = at.y - height * to.y;
 
-    |     1|     0| 0| 0|
-    |     0|     1| 0| 0|
-    |     0|     0| 1| 0|
-    | -at.x| -at.y| 0| 1|
+      const c = Math.cos(angle);
+      const s = Math.sin(angle);
 
-    x
+      const w = 2 / width;
+      const h = -2 / height;
 
-    |     2/width|           0|       0| 0|
-    |           0|   -2/height|       0| 0|
-    |           0|           0| 1/depth| 0|
-    | -2x/width-1| 2y/height+1|       0| 1|
+      /*
 
-    */
+      |   1 |    0| 0| 0|
+      |   0 |    1| 0| 0|
+      |   0 |    0| 1| 0|
+      | at.x| at.y| 0| 1|
 
-    // prettier-ignore
-    const projection = [
-      c * w, s * h, 0, 0,
-      -s * w, c * h, 0, 0,
-      0, 0, 1 / depth, 0,
+      x
 
-      (at.x * (1 - c) + at.y * s) * w - 2 * x / width - 1,
-      (at.y * (1 - c) - at.x * s) * h + 2 * y / height + 1,
-      0, 1,
-    ];
+      |  c| s| 0| 0|
+      | -s| c| 0| 0|
+      |  0| 0| 1| 0|
+      |  0| 0| 0| 1|
 
-    gl.useProgram(program);
-    gl.uniformMatrix4fv(matrixLocation, false, projection);
-    gl.viewport(0, 0, width, height);
-    gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
-    gl.activeTexture(glTEXTURE0);
+      x
 
-    currentTexture = null;
+      |     1|     0| 0| 0|
+      |     0|     1| 0| 0|
+      |     0|     0| 1| 0|
+      | -at.x| -at.y| 0| 1|
 
-    gl.disable(glBLEND);
-    gl.enable(glDEPTHTEST);
-    gl.depthFunc(glLESS);
+      x
 
-    alphaTestMode = true;
-    layers.forEach((l) => {
-      l.o.i(sprite => draw(sprite));
-    });
-    flush();
+      |     2/width|           0|       0| 0|
+      |           0|   -2/height|       0| 0|
+      |           0|           0| 1/depth| 0|
+      | -2x/width-1| 2y/height+1|       0| 1|
 
-    gl.enable(glBLEND);
-    gl.blendFunc(glSRCALPHA, glONEMINUSSRCALPHA);
-    gl.depthFunc(glLEQUAL);
-    gl.uniform1f(alphaTestLocation, 0);
+      */
 
-    alphaTestMode = false;
-    for (let i = layers.length; i > 0; i--) {
-      layers[i - 1].t.i(sprite => draw(sprite));
-    }
-    flush();
+      // prettier-ignore
+      const projection = [
+        c * w, s * h, 0, 0,
+        -s * w, c * h, 0, 0,
+        0, 0, -1 / depth, 0,
+
+        (at.x * (1 - c) + at.y * s) * w - 2 * x / width - 1,
+        (at.y * (1 - c) - at.x * s) * h + 2 * y / height + 1,
+        0, 1,
+      ];
+
+      gl.useProgram(program);
+      gl.uniformMatrix4fv(matrixLocation, false, projection);
+      gl.viewport(0, 0, width, height);
+      gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
+      gl.activeTexture(glTEXTURE0);
+
+      currentTexture = null;
+
+      gl.disable(glBLEND);
+      gl.enable(glDEPTHTEST);
+      gl.depthFunc(glLESS);
+
+      alphaTestMode = true;
+      layers.forEach(layer => layer.o.i(sprite => draw(sprite)));
+      flush();
+
+      gl.enable(glBLEND);
+      gl.blendFunc(blend, glONEMINUSSRCALPHA);
+      gl.depthFunc(glLEQUAL);
+      gl.uniform1f(alphaTestLocation, 0);
+
+      alphaTestMode = false;
+      for (let i = layers.length - 1; i >= 0; i--) {
+        layers[i].t.i(sprite => draw(sprite));
+      }
+      flush();
+    },
   };
 
   renderer.render();
@@ -386,70 +377,72 @@ Renderer.Point = class Point {
     return this;
   }
 
-  clone() {
-    return Renderer.Point(this.x, this.y);
+  copy(point) {
+    this.x = point.x;
+    this.y = point.y;
+    return this;
   }
 };
 
-Renderer.Frame = class Frame {
+class Frame {
   constructor(texture, origin, size, anchor) {
     if (!(this instanceof Frame)) {
       return new Frame(texture, origin, size, anchor);
     }
 
-    this.texture = texture;
-    this.width = size.x;
-    this.height = size.y;
+    this.size = Renderer.Point().copy(size);
+    this.anchor = Renderer.Point().copy(anchor || texture.anchor);
     this.uvs = [
-      origin.x / texture.width,
-      origin.y / texture.height,
-      size.x / texture.width,
-      size.y / texture.height,
+      origin.x / texture.size.x,
+      origin.y / texture.size.y,
+      size.x / texture.size.x,
+      size.y / texture.size.y,
     ];
-    this.anchor = anchor || texture.anchor.clone();
+    this.t = texture;
   }
 
-  get alphaTest() {
-    return this.texture.a;
+  get atest() {
+    return this.t.atest;
   }
 
   get tex() {
-    return this.texture.tex;
+    return this.t.tex;
   }
-};
+}
 
-Renderer.Texture = class Texture {
+class Texture {
   constructor(renderer, src, alphaTest, texParameters) {
     if (!(this instanceof Texture)) {
       return new Texture(renderer, src, alphaTest, texParameters);
     }
 
-    const { gl } = renderer;
+    this.size = Renderer.Point(src.width, src.height);
+    this.anchor = Renderer.Point();
+    this.uvs = [0, 0, 1, 1];
+    this.atest = alphaTest || (alphaTest === 0 ? 0 : 1);
 
-    const params = Object.assign({
-      10240: glNEAREST, // gl.TEXTURE_MAG_FILTER
-      10241: glNEAREST, // gl.TEXTURE_MIN_FILTER
-      10242: glCLAMPTOEDGE, // gl.TEXTURE_WRAP_S
-      10243: glCLAMPTOEDGE, // gl.TEXTURE_WRAP_T
-    }, texParameters);
+    const params = Object.assign(
+      {
+        10240: glNEAREST, // gl.TEXTURE_MAG_FILTER
+        10241: glNEAREST, // gl.TEXTURE_MIN_FILTER
+        10242: glCLAMPTOEDGE, // gl.TEXTURE_WRAP_S
+        10243: glCLAMPTOEDGE, // gl.TEXTURE_WRAP_T
+      },
+      texParameters,
+    );
+
+    const { gl } = renderer;
 
     this.tex = gl.createTexture();
     gl.bindTexture(glTEXTURE2D, this.tex);
     Object.keys(params).forEach(k => gl.texParameteri(glTEXTURE2D, k, params[k]));
     gl.texImage2D(glTEXTURE2D, 0, glRGBA, glRGBA, glUNSIGNEDBYTE, src);
     // gl.generateMipmap(glTEXTURE2D);
-
-    this.anchor = Renderer.Point();
-    this.a = alphaTest || (alphaTest === 0 ? 0 : 1);
-    this.width = src.width;
-    this.height = src.height;
-    this.uvs = [0, 0, 1, 1];
   }
+}
 
-  get alphaTest() {
-    return this.a;
-  }
-};
+Renderer.Frame = Frame;
+Renderer.Texture = Texture;
 
 Renderer.Sprite = class Sprite {
   constructor(frame, props) {
@@ -460,14 +453,18 @@ Renderer.Sprite = class Sprite {
     this.frame = frame;
     this.a = 1;
 
-    Object.assign(this, {
-      visible: true,
-      position: Renderer.Point(),
-      scale: Renderer.Point(1),
-      rotation: 0,
-      tint: 0xffffff,
-      anchor: null,
-    }, props);
+    Object.assign(
+      this,
+      {
+        visible: true,
+        position: Renderer.Point(),
+        rotation: 0,
+        anchor: null,
+        scale: Renderer.Point(1),
+        tint: 0xffffff,
+      },
+      props,
+    );
 
     this.remove();
   }

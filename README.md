@@ -33,6 +33,10 @@ The [UMD](https://github.com/umdjs/umd) build is also available on [unpkg](https
 
 You can find the library on `window.Renderer`.
 
+## Demo
+
+[Live example](https://kutuluk.github.io/js13k-2d)
+
 ## Usage
 
 ```javascript
@@ -67,9 +71,15 @@ scene.add(sprite);
 
 // Render a scene
 renderer.render();
+
+// Change sprite position
+sprite.position.set(100, 50);
+
+// Rerender a scene
+renderer.render();
 ```
 
-> For a better understanding of how to use the library, read along or see example folder and have a look at the [live example](https://kutuluk.github.io/js13k-2d)!
+> For a better understanding of how to use the library, read along or see example folder and have a look at the [live example](https://kutuluk.github.io/js13k-2d).
 
 ## API (in progress)
 

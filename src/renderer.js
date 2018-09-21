@@ -1,5 +1,7 @@
 import List from './list';
 
+// const DEVELOPMENT = process.env.NODE_ENV === 'development';
+
 const glVERTEXSHADER = 35633;
 const glFRAGMENTSHADER = 35632;
 const glARRAYBUFFER = 34962;
@@ -14,6 +16,7 @@ const glDEPTHTEST = 2929;
 const glLESS = 513;
 const glLEQUAL = 515;
 const glBLEND = 3042;
+const glZERO = 0;
 const glONE = 1;
 const glSRCALPHA = 770;
 const glONEMINUSSRCALPHA = 771;
@@ -84,16 +87,20 @@ const Renderer = (canvas, options) => {
   const gl = canvas.getContext('webgl', opts);
 
   /*
-  if (!gl) {
-    throw new Error('WebGL not found');
+  if (DEVELOPMENT) {
+    if (!gl) {
+      throw new Error('WebGL not found');
+    }
   }
   */
 
   const ext = gl.getExtension('ANGLE_instanced_arrays');
 
   /*
-  if (!ext) {
-    throw new Error('Requared ANGLE_instanced_arrays extension not found');
+  if (DEVELOPMENT) {
+    if (!ext) {
+      throw new Error('Requared ANGLE_instanced_arrays extension not found');
+    }
   }
   */
 
@@ -103,10 +110,12 @@ const Renderer = (canvas, options) => {
     gl.compileShader(shader);
 
     /*
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      const error = gl.getShaderInfoLog(shader);
-      gl.deleteShader(shader);
-      throw new Error(error);
+    if (DEVELOPMENT) {
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        const error = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error(error);
+      }
     }
     */
 
@@ -119,10 +128,12 @@ const Renderer = (canvas, options) => {
   gl.linkProgram(program);
 
   /*
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    const error = gl.getProgramInfoLog(program);
-    gl.deleteProgram(program);
-    throw new Error(error);
+  if (DEVELOPMENT) {
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      const error = gl.getProgramInfoLog(program);
+      gl.deleteProgram(program);
+      throw new Error(error);
+    }
   }
   */
 
@@ -130,7 +141,6 @@ const Renderer = (canvas, options) => {
     const buffer = gl.createBuffer();
     gl.bindBuffer(type, buffer);
     gl.bufferData(type, src, usage || glSTATICDRAW);
-    return buffer;
   };
 
   const bindAttrib = (name, size, stride, divisor, offset, type, norm) => {
@@ -139,8 +149,6 @@ const Renderer = (canvas, options) => {
 
     gl.vertexAttribPointer(location, size, type || glFLOAT, !!norm, stride || 0, offset || 0);
     divisor && ext.vertexAttribDivisorANGLE(location, divisor);
-
-    return location;
   };
 
   // indicesBuffer
@@ -182,12 +190,45 @@ const Renderer = (canvas, options) => {
   const textureLocation = getUniformLocation('x');
   const alphaTestLocation = getUniformLocation('j');
 
+  let projection;
+  let width;
+  let height;
+
   let count = 0;
-  let currentTexture;
+  let currentFrame;
   let alphaTestMode;
+  let init;
 
   const flush = () => {
     if (!count) return;
+
+    if (init) {
+      gl.useProgram(program);
+      gl.uniformMatrix4fv(matrixLocation, false, projection);
+      gl.viewport(0, 0, width, height);
+      gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
+      gl.activeTexture(glTEXTURE0);
+      gl.enable(glBLEND);
+      gl.enable(glDEPTHTEST);
+
+      init = false;
+    }
+
+    /*
+    if (alphaTestMode) {
+      gl.disable(glBLEND);
+    } else {
+      gl.enable(glBLEND);
+      gl.blendFunc(blend, glONEMINUSSRCALPHA);
+    }
+    */
+
+    gl.blendFunc(alphaTestMode ? glONE : blend, alphaTestMode ? glZERO : glONEMINUSSRCALPHA);
+    gl.depthFunc(alphaTestMode ? glLESS : glLEQUAL);
+
+    gl.bindTexture(glTEXTURE2D, currentFrame.tex);
+    gl.uniform1i(textureLocation, currentFrame.tex);
+    gl.uniform1f(alphaTestLocation, alphaTestMode ? currentFrame.atest : 0);
 
     gl.bufferSubData(glARRAYBUFFER, 0, floatView.subarray(0, count * floatSize));
     ext.drawElementsInstancedANGLE(glTRIANGLES, 6, glUNSIGNEDBYTE, 0, count);
@@ -199,16 +240,13 @@ const Renderer = (canvas, options) => {
 
     if (count === maxBatch) flush();
 
-    const { frame, scale, position } = sprite;
-    const { tex, size, uvs } = frame;
+    const { frame } = sprite;
+    const { uvs } = frame;
     const anchor = sprite.anchor || frame.anchor;
 
-    if (currentTexture !== tex) {
-      flush();
-      currentTexture = tex;
-      gl.bindTexture(glTEXTURE2D, tex);
-      gl.uniform1i(textureLocation, tex);
-      gl.uniform1f(alphaTestLocation, alphaTestMode ? frame.atest : 0);
+    if (currentFrame.tex !== frame.tex) {
+      currentFrame.tex && flush();
+      currentFrame = frame;
     }
 
     let i = count * floatSize;
@@ -216,13 +254,13 @@ const Renderer = (canvas, options) => {
     floatView[i++] = anchor.x;
     floatView[i++] = anchor.y;
 
-    floatView[i++] = scale.x * size.x;
-    floatView[i++] = scale.y * size.y;
+    floatView[i++] = sprite.scale.x * frame.size.x;
+    floatView[i++] = sprite.scale.y * frame.size.y;
 
     floatView[i++] = sprite.rotation;
 
-    floatView[i++] = position.x;
-    floatView[i++] = position.y;
+    floatView[i++] = sprite.position.x;
+    floatView[i++] = sprite.position.y;
 
     /* eslint-disable prefer-destructuring */
     floatView[i++] = uvs[0];
@@ -271,8 +309,8 @@ const Renderer = (canvas, options) => {
     },
 
     render() {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
 
       canvas.width = width;
       canvas.height = height;
@@ -319,7 +357,7 @@ const Renderer = (canvas, options) => {
       */
 
       // prettier-ignore
-      const projection = [
+      projection = [
         c * w, s * h, 0, 0,
         -s * w, c * h, 0, 0,
         0, 0, -1 / depth, 0,
@@ -329,26 +367,12 @@ const Renderer = (canvas, options) => {
         0, 1,
       ];
 
-      gl.useProgram(program);
-      gl.uniformMatrix4fv(matrixLocation, false, projection);
-      gl.viewport(0, 0, width, height);
-      gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
-      gl.activeTexture(glTEXTURE0);
-
-      currentTexture = null;
-
-      gl.disable(glBLEND);
-      gl.enable(glDEPTHTEST);
-      gl.depthFunc(glLESS);
+      init = true;
+      currentFrame = { tex: null };
 
       alphaTestMode = true;
       layers.forEach(layer => layer.o.i(sprite => draw(sprite)));
       flush();
-
-      gl.enable(glBLEND);
-      gl.blendFunc(blend, glONEMINUSSRCALPHA);
-      gl.depthFunc(glLEQUAL);
-      gl.uniform1f(alphaTestLocation, 0);
 
       alphaTestMode = false;
       for (let i = layers.length - 1; i >= 0; i--) {

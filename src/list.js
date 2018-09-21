@@ -1,13 +1,18 @@
 class Node {
-  constructor(cargo, next) {
+  constructor(list, cargo, next) {
+    this.l = list;
     this.c = cargo;
-    this.p = null;
     this.n = next;
-    this.d = 0;
+    this.p = null;
   }
 
   r() {
-    this.d = 1;
+    if (this.p) {
+      this.p.n = this.n;
+    } else {
+      this.l.h = this.n;
+    }
+    this.n && (this.n.p = this.p);
   }
 }
 
@@ -17,7 +22,7 @@ export default class List {
   }
 
   add(cargo) {
-    const node = new Node(cargo, this.h);
+    const node = new Node(this, cargo, this.h);
 
     this.h && (this.h.p = node);
     this.h = node;
@@ -28,16 +33,7 @@ export default class List {
   i(fn) {
     let node = this.h;
     while (node) {
-      if (node.d) {
-        if (node.p) {
-          node.p.n = node.n;
-        } else {
-          this.h = node.n;
-        }
-        node.n && (node.n.p = node.p);
-      } else {
-        fn(node.c);
-      }
+      fn(node.c);
       node = node.n;
     }
   }

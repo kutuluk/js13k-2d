@@ -136,11 +136,12 @@ const addSprite = (a) => {
     }
 
     sprite.position.set(x, y);
-    sprite.scale.set(0.5);
     sprite.tint = Math.random() * 0xffffff;
     sprite.rotation = Math.random() * Math.PI * 2;
-    sprite.dr = (0.5 - Math.random()) * 0.1;
-    sprite.trans = !Math.round(Math.random());
+    // sprite.scale.set(0.5);
+    // sprite.dr = (0.5 - Math.random()) * 0.1;
+    // sprite.trans = !Math.round(Math.random());
+    // sprite.alpha = !Math.round(Math.random()) ? 1 : 0.8;
     sprs.push(sprite);
     layer.add(sprite);
   }
@@ -174,12 +175,14 @@ const loop = () => {
 
   sprites.innerHTML = `Renderer: ${info}</br>Sprites: ${len} (click to add)`;
 
+  /*
   sprs.forEach((sprite) => {
     sprite.dr && (sprite.rotation += sprite.dr);
-    if (sprite.trans && sprite.alpha > 0.4) {
+    if (sprite.trans && sprite.alpha > 0.8) {
       sprite.alpha -= 0.001;
     }
   });
+  */
 
   scene.camera.angle += 0.005;
 

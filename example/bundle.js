@@ -1,20 +1,18 @@
-var t = function (t, n) {
-    this.c = t, this.p = null, this.n = n, this.d = 0;
+var t = function (t, n, e) {
+    this.l = t, this.c = n, this.n = e, this.p = null;
 };
 t.prototype.r = function () {
-    this.d = 1;
+    this.p ? (this.p.n = this.n) : (this.l.h = this.n), this.n && (this.n.p = this.p);
 };
 var n = function () {
     this.h = null;
 };
 n.prototype.add = function (n) {
-    var e = new t(n, this.h);
+    var e = new t(this, n, this.h);
     return this.h && (this.h.p = e), this.h = e, e;
 }, n.prototype.i = function (t) {
-    var this$1 = this;
-
     for (var n = this.h;n; ) 
-        { n.d ? (n.p ? (n.p.n = n.n) : (this$1.h = n.n), n.n && (n.n.p = n.p)) : t(n.c), n = n.n; }
+        { t(n.c), n = n.n; }
 };
 var e = function (t) {
     this.z = t, this.o = new n(), this.t = new n();
@@ -28,35 +26,35 @@ var i = function (t, n) {
     var r = Object.assign({
         antialias: !1,
         alpha: !1
-    }, n), a = r.alpha ? 1 : 770, o = t.getContext("webgl", r), s = o.getExtension("ANGLE_instanced_arrays"), u = function (t, n) {
+    }, n), a = r.alpha ? 1 : 770, o = t.getContext("webgl", r), s = o.getExtension("ANGLE_instanced_arrays"), c = function (t, n) {
         var e = o.createShader(n);
         return o.shaderSource(e, t), o.compileShader(e), e;
-    }, c = o.createProgram();
-    o.attachShader(c, u("attribute vec2 g;\nattribute vec2 a;\nattribute vec2 t;\nattribute float r;\nattribute vec2 s;\nattribute vec4 u;\nattribute vec4 c;\nattribute float z;\nuniform mat4 m;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nv=u.xy+g*u.zw;\ni=c.abgr;\nvec2 p=(g-a)*s;\nfloat q=cos(r);\nfloat w=sin(r);\np=vec2(p.x*q-p.y*w,p.x*w+p.y*q);\np+=a+t;\ngl_Position=m*vec4(p,z,1);}", 35633)), o.attachShader(c, u("precision mediump float;\nuniform sampler2D x;\nuniform float j;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nvec4 c=texture2D(x,v);\ngl_FragColor=c*i;\nif(j>0.0){\nif(c.a<j)discard;\ngl_FragColor.a=1.0;};}", 35632)), o.linkProgram(c);
+    }, u = o.createProgram();
+    o.attachShader(u, c("attribute vec2 g;\nattribute vec2 a;\nattribute vec2 t;\nattribute float r;\nattribute vec2 s;\nattribute vec4 u;\nattribute vec4 c;\nattribute float z;\nuniform mat4 m;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nv=u.xy+g*u.zw;\ni=c.abgr;\nvec2 p=(g-a)*s;\nfloat q=cos(r);\nfloat w=sin(r);\np=vec2(p.x*q-p.y*w,p.x*w+p.y*q);\np+=a+t;\ngl_Position=m*vec4(p,z,1);}", 35633)), o.attachShader(u, c("precision mediump float;\nuniform sampler2D x;\nuniform float j;\nvarying vec2 v;\nvarying vec4 i;\nvoid main(){\nvec4 c=texture2D(x,v);\ngl_FragColor=c*i;\nif(j>0.0){\nif(c.a<j)discard;\ngl_FragColor.a=1.0;};}", 35632)), o.linkProgram(u);
     var h = function (t, n, e) {
         var i = o.createBuffer();
-        return o.bindBuffer(t, i), o.bufferData(t, n, e || 35044), i;
-    }, f = function (t, n, e, i, r, a, u) {
-        var h = o.getAttribLocation(c, t);
-        return o.enableVertexAttribArray(h), o.vertexAttribPointer(h, n, a || 5126, !(!u), e || 0, r || 0), i && s.vertexAttribDivisorANGLE(h, i), h;
+        o.bindBuffer(t, i), o.bufferData(t, n, e || 35044);
+    }, f = function (t, n, e, i, r, a, c) {
+        var h = o.getAttribLocation(u, t);
+        o.enableVertexAttribArray(h), o.vertexAttribPointer(h, n, a || 5126, !(!c), e || 0, r || 0), i && s.vertexAttribDivisorANGLE(h, i);
     };
     h(34963, new Uint8Array([0,1,2,2,1,3])), h(34962, new Float32Array([0,0,0,1,1,
         0,1,1])), f("g", 2);
     var l = new ArrayBuffer(3407820), v = new Float32Array(l), p = new Uint32Array(l);
     h(34962, l, 35048), f("a", 2, 52, 1), f("s", 2, 52, 1, 8), f("r", 1, 52, 1, 16), f("t", 2, 52, 1, 20), f("u", 4, 52, 1, 28), f("c", 4, 52, 1, 44, 5121, !0), f("z", 1, 52, 1, 48);
-    var y, d, x = function (t) {
-        return o.getUniformLocation(c, t);
-    }, g = x("m"), b = x("x"), m = x("j"), w = 0, P = function () {
-        w && (o.bufferSubData(34962, 0, v.subarray(0, 13 * w)), s.drawElementsInstancedANGLE(4, 6, 5121, 0, w), w = 0);
-    }, z = function (t) {
+    var x, y, d, g, b, m, w = function (t) {
+        return o.getUniformLocation(u, t);
+    }, P = w("m"), z = w("x"), A = w("j"), j = 0, E = function () {
+        j && (m && (o.useProgram(u), o.uniformMatrix4fv(P, !1, x), o.viewport(0, 0, y, d), o.clear(16640), o.activeTexture(33984), o.enable(3042), o.enable(2929), m = !1), o.blendFunc(b ? 1 : a, b ? 0 : 771), o.depthFunc(b ? 513 : 515), o.bindTexture(3553, g.tex), o.uniform1i(z, g.tex), o.uniform1f(A, b ? g.atest : 0), o.bufferSubData(34962, 0, v.subarray(0, 13 * j)), s.drawElementsInstancedANGLE(4, 6, 5121, 0, j), j = 0);
+    }, F = function (t) {
         if (t.visible) {
-            65535 === w && P();
-            var n = t.frame, e = t.scale, i = t.position, r = n.tex, a = n.size, s = n.uvs, u = t.anchor || n.anchor;
-            y !== r && (P(), y = r, o.bindTexture(3553, r), o.uniform1i(b, r), o.uniform1f(m, d ? n.atest : 0));
-            var c = 13 * w;
-            v[c++] = u.x, v[c++] = u.y, v[c++] = e.x * a.x, v[c++] = e.y * a.y, v[c++] = t.rotation, v[c++] = i.x, v[c++] = i.y, v[c++] = s[0], v[c++] = s[1], v[c++] = s[2], v[c++] = s[3], p[c++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, v[c++] = t.layer.z, w++;
+            65535 === j && E();
+            var n = t.frame, e = n.uvs, i = t.anchor || n.anchor;
+            g.tex !== n.tex && (g.tex && E(), g = n);
+            var r = 13 * j;
+            v[r++] = i.x, v[r++] = i.y, v[r++] = t.scale.x * n.size.x, v[r++] = t.scale.y * n.size.y, v[r++] = t.rotation, v[r++] = t.position.x, v[r++] = t.position.y, v[r++] = e[0], v[r++] = e[1], v[r++] = e[2], v[r++] = e[3], p[r++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, v[r++] = t.layer.z, j++;
         }
-    }, A = new e(0), j = [A], F = {
+    }, S = new e(0), D = [S], O = {
         gl: o,
         camera: {
             at: i.Point(),
@@ -67,35 +65,35 @@ var i = function (t, n) {
             void 0 === i && (i = 1), o.clearColor(t, n, e, i);
         },
         layer: function (t) {
-            var n = j.find(function (n) {
+            var n = D.find(function (n) {
                 return n.z === t;
             });
-            return n || (n = new e(t), j.push(n), j.sort(function (t, n) {
+            return n || (n = new e(t), D.push(n), D.sort(function (t, n) {
                 return n.z - t.z;
             })), n;
         },
         add: function (t) {
-            A.add(t);
+            S.add(t);
         },
         render: function () {
-            var n = t.clientWidth, e = t.clientHeight;
-            t.width = n, t.height = e;
-            var i = F.camera, r = i.at, s = i.to, u = i.angle, h = r.x - n * s.x, f = r.y - e * s.y, l = Math.cos(u), v = Math.sin(u), p = 2 / n, x = -2 / e, b = [l * p,
-                v * x,0,0,-v * p,l * x,0,0,0,0,-1e-5,0,(r.x * (1 - l) + r.y * v) * p - 2 * h / n - 1,
-                (r.y * (1 - l) - r.x * v) * x + 2 * f / e + 1,0,1];
-            o.useProgram(c), o.uniformMatrix4fv(g, !1, b), o.viewport(0, 0, n, e), o.clear(16640), o.activeTexture(33984), y = null, o.disable(3042), o.enable(2929), o.depthFunc(513), d = !0, j.forEach(function (t) {
+            d = t.clientHeight, t.width = (y = t.clientWidth), t.height = d;
+            var n = O.camera, e = n.at, i = n.to, r = n.angle, a = e.x - y * i.x, o = e.y - d * i.y, s = Math.cos(r), c = Math.sin(r), u = 2 / y, h = -2 / d;
+            x = [s * u,c * h,0,0,-c * u,s * h,0,0,0,0,-1e-5,0,(e.x * (1 - s) + e.y * c) * u - 2 * a / y - 1,
+                (e.y * (1 - s) - e.x * c) * h + 2 * o / d + 1,0,1], m = !0, g = {
+                tex: null
+            }, b = !0, D.forEach(function (t) {
                 return t.o.i(function (t) {
-                    return z(t);
+                    return F(t);
                 });
-            }), P(), o.enable(3042), o.blendFunc(a, 771), o.depthFunc(515), o.uniform1f(m, 0), d = !1;
-            for (var w = j.length - 1;w >= 0; w--) 
-                { j[w].t.i(function (t) {
-                return z(t);
+            }), E(), b = !1;
+            for (var f = D.length - 1;f >= 0; f--) 
+                { D[f].t.i(function (t) {
+                return F(t);
             }); }
-            P();
+            E();
         }
     };
-    return F.render(), F;
+    return O.render(), O;
 };
 i.Point = (function () {
     function t(t, n) {
@@ -252,7 +250,6 @@ var qFrame = Frame(atlas, Point(32, 0), Point(32));
 var fFrame = Frame(atlas, Point(64, 0), Point(32));
 var frames = [atlas,bFrame,qFrame,fFrame];
 var len = 0;
-var sprs = [];
 var mask = logoMask();
 var cl = 0;
 var addSprite = function (a) {
@@ -270,12 +267,8 @@ var addSprite = function (a) {
             y = ~(~(600 * Math.random()));
         }
         sprite.position.set(x, y);
-        sprite.scale.set(0.5);
         sprite.tint = Math.random() * 0xffffff;
         sprite.rotation = Math.random() * Math.PI * 2;
-        sprite.dr = (0.5 - Math.random()) * 0.1;
-        sprite.trans = !Math.round(Math.random());
-        sprs.push(sprite);
         layer.add(sprite);
     }
 };
@@ -300,12 +293,6 @@ var loop = function () {
     if (len < 3000 || add) 
         { addSprite(25); }
     sprites.innerHTML = "Renderer: " + info + "</br>Sprites: " + len + " (click to add)";
-    sprs.forEach(function (sprite) {
-        sprite.dr && (sprite.rotation += sprite.dr);
-        if (sprite.trans && sprite.alpha > 0.4) {
-            sprite.alpha -= 0.001;
-        }
-    });
     scene.camera.angle += 0.005;
     scene.render();
     stats.end();

@@ -163,7 +163,13 @@ Returns an Renderer instance.
 ##### Parameters
 
 -   `canvas` - The element where the scene will be rendered to. The provided element has to be `<canvas>` otherwise it won't work.
--   `options` - [WebGL context attributes](https://developer.mozilla.org/docs/Web/API/HTMLCanvasElement/getContext). Note that the default values ​​for `alpha` and `antialias` are overridden to `false`.
+-   `options`:
+
+-   `scale` : number - The resolution multiplier by which the scene is rendered relative to the canvas' resolution. Use `window.devicePixelRatio` for the highest possible quality, `1` for the best performance. Default `1`.
+-   `alpha` : boolean - Default `false`.
+-   `antialias` : boolean - Default `false`.
+
+See [WebGL context attributes](https://developer.mozilla.org/docs/Web/API/HTMLCanvasElement/getContext). Note that the default values ​​for `alpha` and `antialias` are overridden to `false`.
 
 ##### Properties
 

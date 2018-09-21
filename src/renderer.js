@@ -81,8 +81,9 @@ class Layer {
 }
 
 const Renderer = (canvas, options) => {
-  const opts = Object.assign({ antialias: false, alpha: false }, options);
+  const opts = Object.assign({ antialias: false, alpha: false, scale: 1 }, options);
   const blend = opts.alpha ? glONE : glSRCALPHA;
+  const { scale } = opts;
 
   const gl = canvas.getContext('webgl', opts);
 
@@ -309,8 +310,8 @@ const Renderer = (canvas, options) => {
     },
 
     render() {
-      width = canvas.clientWidth;
-      height = canvas.clientHeight;
+      width = canvas.clientWidth * scale;
+      height = canvas.clientHeight * scale;
 
       canvas.width = width;
       canvas.height = height;

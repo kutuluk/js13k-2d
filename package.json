@@ -10,7 +10,7 @@
     "repository": "github:kutuluk/js13k-2d",
     "author": "Evgeniy Pavlov <mail@kutuluk.com>",
     "license": "MIT",
-    "version": "0.7.2",
+    "version": "0.7.3",
     "source": "src/renderer.js",
     "main": "dist/renderer.js",
     "module": "dist/renderer.m.js",

@@ -23,10 +23,8 @@ export default class List {
 
   add(cargo) {
     const node = new Node(this, cargo, this.h);
-
     this.h && (this.h.p = node);
     this.h = node;
-
     return node;
   }
 

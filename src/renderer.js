@@ -22,12 +22,11 @@ const glSRCALPHA = 770;
 const glONEMINUSSRCALPHA = 771;
 const glCOLORBUFFERBIT = 16384;
 const glDEPTHBUFFERBIT = 256;
-const glTEXTURE0 = 33984;
 const glTEXTURE2D = 3553;
 const glNEAREST = 9728;
 const glCLAMPTOEDGE = 33071;
 
-const vs = `attribute vec2 g;
+const vertexShader = `attribute vec2 g;
 attribute vec2 a;
 attribute vec2 t;
 attribute float r;
@@ -48,7 +47,7 @@ p=vec2(p.x*q-p.y*w,p.x*w+p.y*q);
 p+=a+t;
 gl_Position=m*vec4(p,z,1);}`;
 
-const fs = `precision mediump float;
+const fragmentShader = `precision mediump float;
 uniform sampler2D x;
 uniform float j;
 varying vec2 v;
@@ -68,7 +67,6 @@ const transparent = sprite => sprite.alpha !== 1 || sprite.frame.atest === 0;
 class Layer {
   constructor(z) {
     this.z = z;
-
     this.o = new List();
     this.t = new List();
   }
@@ -124,8 +122,8 @@ const Renderer = (canvas, options) => {
   };
 
   const program = gl.createProgram();
-  gl.attachShader(program, compileShader(vs, glVERTEXSHADER));
-  gl.attachShader(program, compileShader(fs, glFRAGMENTSHADER));
+  gl.attachShader(program, compileShader(vertexShader, glVERTEXSHADER));
+  gl.attachShader(program, compileShader(fragmentShader, glFRAGMENTSHADER));
   gl.linkProgram(program);
 
   /*
@@ -198,22 +196,23 @@ const Renderer = (canvas, options) => {
   let count = 0;
   let currentFrame;
   let alphaTestMode;
-  let init;
+
+  const resize = () => {
+    width = canvas.clientWidth * scale | 0;
+    height = canvas.clientHeight * scale | 0;
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      return true;
+    }
+
+    return false;
+  };
+
 
   const flush = () => {
     if (!count) return;
-
-    if (init) {
-      gl.useProgram(program);
-      gl.uniformMatrix4fv(matrixLocation, false, projection);
-      gl.viewport(0, 0, width, height);
-      gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
-      gl.activeTexture(glTEXTURE0);
-      gl.enable(glBLEND);
-      gl.enable(glDEPTHTEST);
-
-      init = false;
-    }
 
     /*
     if (alphaTestMode) {
@@ -309,13 +308,10 @@ const Renderer = (canvas, options) => {
       zeroLayer.add(sprite);
     },
 
+    resize,
+
     render() {
-      width = canvas.clientWidth * scale;
-      height = canvas.clientHeight * scale;
-
-      canvas.width = width;
-      canvas.height = height;
-
+      resize();
       const { at, to, angle } = renderer.camera;
 
       const x = at.x - width * to.x;
@@ -368,7 +364,14 @@ const Renderer = (canvas, options) => {
         0, 1,
       ];
 
-      init = true;
+      gl.useProgram(program);
+      gl.enable(glBLEND);
+      gl.enable(glDEPTHTEST);
+
+      gl.uniformMatrix4fv(matrixLocation, false, projection);
+      gl.viewport(0, 0, width, height);
+      gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
+
       currentFrame = { tex: null };
 
       alphaTestMode = true;
@@ -376,14 +379,14 @@ const Renderer = (canvas, options) => {
       flush();
 
       alphaTestMode = false;
-      for (let i = layers.length - 1; i >= 0; i--) {
-        layers[i].t.i(sprite => draw(sprite));
+      for (let l = layers.length - 1; l >= 0; l--) {
+        layers[l].t.i(sprite => draw(sprite));
       }
       flush();
     },
   };
 
-  renderer.render();
+  resize();
 
   return renderer;
 };
@@ -475,18 +478,17 @@ Renderer.Sprite = class Sprite {
       return new Sprite(frame, props);
     }
 
-    this.frame = frame;
-    this.a = 1;
-
     Object.assign(
       this,
       {
+        frame,
         visible: true,
         position: Renderer.Point(),
         rotation: 0,
         anchor: null,
         scale: Renderer.Point(1),
         tint: 0xffffff,
+        a: 1,
       },
       props,
     );

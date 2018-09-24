@@ -7,9 +7,11 @@
 -   **Tiny:** weighs about 2 kilobyte gzipped
 -   **Extremely fast:** tens of thousands of sprites on the screen
 
-## Install
+## Demo
 
-This project uses [node](http://nodejs.org) and [npm](https://npmjs.com). Go check them out if you don't have them locally installed.
+[Live example](https://kutuluk.github.io/js13k-2d)
+
+## Install
 
 ```sh
 $ npm install js13k-2d
@@ -32,10 +34,6 @@ The [UMD](https://github.com/umdjs/umd) build is also available on [unpkg](https
 ```
 
 You can find the library on `window.Renderer`.
-
-## Demo
-
-[Live example](https://kutuluk.github.io/js13k-2d)
 
 ## Usage
 
@@ -62,21 +60,26 @@ const atlas = Texture(scene, image);
 const frame = Frame(atlas, Point(), Point(32));
 
 // Create a sprite
-const sprite = Sprite(frame, {
-    position: Point(75, 50),
-});
+const sprite = Sprite(frame);
 
 // Add a sprite to scene
 scene.add(sprite);
 
-// Render a scene
-renderer.render();
+const loop = () => {
+    // Get the actual canvas size
+    scene.resize();
+    const { width, height } = view; // or scene.gl.canvas
 
-// Change sprite position
-sprite.position.set(100, 50);
+    // Change sprite position
+    sprite.position.set(Math.random() * width, Math.random() * height);
 
-// Rerender a scene
-renderer.render();
+    // Render a scene
+    scene.render();
+
+    requestAnimationFrame(loop);
+};
+
+loop();
 ```
 
 > For a better understanding of how to use the library, read along or see example folder and have a look at the [live example](https://kutuluk.github.io/js13k-2d).
@@ -198,6 +201,10 @@ Gets or creates a layer from the given `z`.
 #### `add(sprite)`
 
 Adds a sprite to the layer with `z` equal to 0.
+
+#### `resize()`
+
+Makes inner canvas size equal to the displayed size of the canvas. Returns `true` if the change was made and `false` otherwise. This method is called inside render automatically. Directly it needs to be called only if it is necessary to get the actual canvas size before render or to determine the fact of changing the size of the canvas.
 
 #### `render()`
 

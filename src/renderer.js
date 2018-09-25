@@ -2,29 +2,29 @@ import List from './list';
 
 // const DEVELOPMENT = process.env.NODE_ENV === 'development';
 
-const glVERTEXSHADER = 35633;
-const glFRAGMENTSHADER = 35632;
-const glARRAYBUFFER = 34962;
-const glELEMENTARRAYBUFFER = 34963;
-const glSTATICDRAW = 35044;
-const glDYNAMICDRAW = 35048;
-const glRGBA = 6408;
-const glUNSIGNEDBYTE = 5121;
-const glFLOAT = 5126;
-const glTRIANGLES = 4;
-const glDEPTHTEST = 2929;
-const glLESS = 513;
-const glLEQUAL = 515;
-const glBLEND = 3042;
-const glZERO = 0;
-const glONE = 1;
-const glSRCALPHA = 770;
-const glONEMINUSSRCALPHA = 771;
-const glCOLORBUFFERBIT = 16384;
-const glDEPTHBUFFERBIT = 256;
-const glTEXTURE2D = 3553;
-const glNEAREST = 9728;
-const glCLAMPTOEDGE = 33071;
+const GL_VERTEX_SHADER = 35633;
+const GL_FRAGMENT_SHADER = 35632;
+const GL_ARRAY_BUFFER = 34962;
+const GL_ELEMENT_ARRAY_BUFFER = 34963;
+const GL_STATIC_DRAW = 35044;
+const GL_DYNAMI_CDRAW = 35048;
+const GL_RGBA = 6408;
+const GL_UNSIGNED_BYTE = 5121;
+const GL_FLOAT = 5126;
+const GL_TRIANGLES = 4;
+const GL_DEPTH_TEST = 2929;
+const GL_LESS = 513;
+const GL_LEQUAL = 515;
+const GL_BLEND = 3042;
+const GL_ZERO = 0;
+const GL_ONE = 1;
+const GL_SRC_ALPHA = 770;
+const GL_ONE_MINUS_SRC_ALPHA = 771;
+const GL_COLOR_BUFFER_BIT = 16384;
+const GL_DEPTH_BUFFER_BIT = 256;
+const GL_TEXTURE_2D = 3553;
+const GL_NEAREST = 9728;
+const GL_CLAMP_TO_EDGE = 33071;
 
 const vertexShader = `attribute vec2 g;
 attribute vec2 a;
@@ -79,9 +79,11 @@ class Layer {
 }
 
 const Renderer = (canvas, options) => {
-  const opts = Object.assign({ antialias: false, alpha: false, scale: 1 }, options);
-  const blend = opts.alpha ? glONE : glSRCALPHA;
-  const { scale } = opts;
+  const opts = Object.assign({ antialias: false, alpha: false }, options);
+
+  const blend = opts.alpha ? GL_ONE : GL_SRC_ALPHA;
+  const scale = opts.scale || 1;
+  delete opts.scale;
 
   const gl = canvas.getContext('webgl', opts);
 
@@ -122,8 +124,8 @@ const Renderer = (canvas, options) => {
   };
 
   const program = gl.createProgram();
-  gl.attachShader(program, compileShader(vertexShader, glVERTEXSHADER));
-  gl.attachShader(program, compileShader(fragmentShader, glFRAGMENTSHADER));
+  gl.attachShader(program, compileShader(vertexShader, GL_VERTEX_SHADER));
+  gl.attachShader(program, compileShader(fragmentShader, GL_FRAGMENT_SHADER));
   gl.linkProgram(program);
 
   /*
@@ -139,22 +141,22 @@ const Renderer = (canvas, options) => {
   const createBuffer = (type, src, usage) => {
     const buffer = gl.createBuffer();
     gl.bindBuffer(type, buffer);
-    gl.bufferData(type, src, usage || glSTATICDRAW);
+    gl.bufferData(type, src, usage || GL_STATIC_DRAW);
   };
 
   const bindAttrib = (name, size, stride, divisor, offset, type, norm) => {
     const location = gl.getAttribLocation(program, name);
     gl.enableVertexAttribArray(location);
 
-    gl.vertexAttribPointer(location, size, type || glFLOAT, !!norm, stride || 0, offset || 0);
+    gl.vertexAttribPointer(location, size, type || GL_FLOAT, !!norm, stride || 0, offset || 0);
     divisor && ext.vertexAttribDivisorANGLE(location, divisor);
   };
 
   // indicesBuffer
-  createBuffer(glELEMENTARRAYBUFFER, new Uint8Array([0, 1, 2, 2, 1, 3]));
+  createBuffer(GL_ELEMENT_ARRAY_BUFFER, new Uint8Array([0, 1, 2, 2, 1, 3]));
 
   // vertexBuffer
-  createBuffer(glARRAYBUFFER, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]));
+  createBuffer(GL_ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 0, 1, 1]));
 
   // vertexLocation
   bindAttrib('g', 2);
@@ -167,7 +169,7 @@ const Renderer = (canvas, options) => {
   const uintView = new Uint32Array(arrayBuffer);
 
   // dynamicBuffer
-  createBuffer(glARRAYBUFFER, arrayBuffer, glDYNAMICDRAW);
+  createBuffer(GL_ARRAY_BUFFER, arrayBuffer, GL_DYNAMI_CDRAW);
 
   // anchorLocation
   bindAttrib('a', 2, byteSize, 1);
@@ -180,7 +182,7 @@ const Renderer = (canvas, options) => {
   // uvsLocation
   bindAttrib('u', 4, byteSize, 1, 28);
   // colorLocation
-  bindAttrib('c', 4, byteSize, 1, 44, glUNSIGNEDBYTE, true);
+  bindAttrib('c', 4, byteSize, 1, 44, GL_UNSIGNED_BYTE, true);
   // zLocation
   bindAttrib('z', 1, byteSize, 1, 48);
 
@@ -201,13 +203,12 @@ const Renderer = (canvas, options) => {
     width = canvas.clientWidth * scale | 0;
     height = canvas.clientHeight * scale | 0;
 
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-      return true;
-    }
+    const change = canvas.width !== width || canvas.height !== height;
 
-    return false;
+    canvas.width = width;
+    canvas.height = height;
+
+    return change;
   };
 
 
@@ -216,22 +217,22 @@ const Renderer = (canvas, options) => {
 
     /*
     if (alphaTestMode) {
-      gl.disable(glBLEND);
+      gl.disable(GL_BLEND);
     } else {
-      gl.enable(glBLEND);
-      gl.blendFunc(blend, glONEMINUSSRCALPHA);
+      gl.enable(GL_BLEND);
+      gl.blendFunc(blend, GL_ONE_MINUS_SRC_ALPHA);
     }
     */
 
-    gl.blendFunc(alphaTestMode ? glONE : blend, alphaTestMode ? glZERO : glONEMINUSSRCALPHA);
-    gl.depthFunc(alphaTestMode ? glLESS : glLEQUAL);
+    gl.blendFunc(alphaTestMode ? GL_ONE : blend, alphaTestMode ? GL_ZERO : GL_ONE_MINUS_SRC_ALPHA);
+    gl.depthFunc(alphaTestMode ? GL_LESS : GL_LEQUAL);
 
-    gl.bindTexture(glTEXTURE2D, currentFrame.tex);
+    gl.bindTexture(GL_TEXTURE_2D, currentFrame.tex);
     gl.uniform1i(textureLocation, currentFrame.tex);
     gl.uniform1f(alphaTestLocation, alphaTestMode ? currentFrame.atest : 0);
 
-    gl.bufferSubData(glARRAYBUFFER, 0, floatView.subarray(0, count * floatSize));
-    ext.drawElementsInstancedANGLE(glTRIANGLES, 6, glUNSIGNEDBYTE, 0, count);
+    gl.bufferSubData(GL_ARRAY_BUFFER, 0, floatView.subarray(0, count * floatSize));
+    ext.drawElementsInstancedANGLE(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0, count);
     count = 0;
   };
 
@@ -270,8 +271,7 @@ const Renderer = (canvas, options) => {
     /* eslint-enable prefer-destructuring */
 
     uintView[i++] = (((sprite.tint & 0xffffff) << 8) | ((sprite.alpha * 255) & 255)) >>> 0;
-
-    floatView[i++] = sprite.layer.z;
+    floatView[i] = sprite.layer.z;
 
     count++;
   };
@@ -365,22 +365,22 @@ const Renderer = (canvas, options) => {
       ];
 
       gl.useProgram(program);
-      gl.enable(glBLEND);
-      gl.enable(glDEPTHTEST);
+      gl.enable(GL_BLEND);
+      gl.enable(GL_DEPTH_TEST);
 
       gl.uniformMatrix4fv(matrixLocation, false, projection);
       gl.viewport(0, 0, width, height);
-      gl.clear(glCOLORBUFFERBIT | glDEPTHBUFFERBIT);
+      gl.clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       currentFrame = { tex: null };
 
       alphaTestMode = true;
-      layers.forEach(layer => layer.o.i(sprite => draw(sprite)));
+      layers.forEach(layer => layer.o.i(draw));
       flush();
 
       alphaTestMode = false;
       for (let l = layers.length - 1; l >= 0; l--) {
-        layers[l].t.i(sprite => draw(sprite));
+        layers[l].t.i(draw);
       }
       flush();
     },
@@ -399,9 +399,9 @@ Renderer.Point = class Point {
     this.set(x, y);
   }
 
-  set(x, y) {
-    this.x = x || 0;
-    this.y = y || (y !== 0 ? this.x : 0);
+  set(x = 0, y) {
+    this.x = x;
+    this.y = y || x;
     return this;
   }
 
@@ -451,10 +451,10 @@ class Texture {
 
     const params = Object.assign(
       {
-        10240: glNEAREST, // gl.TEXTURE_MAG_FILTER
-        10241: glNEAREST, // gl.TEXTURE_MIN_FILTER
-        10242: glCLAMPTOEDGE, // gl.TEXTURE_WRAP_S
-        10243: glCLAMPTOEDGE, // gl.TEXTURE_WRAP_T
+        10240: GL_NEAREST, // gl.TEXTURE_MAG_FILTER
+        10241: GL_NEAREST, // gl.TEXTURE_MIN_FILTER
+        10242: GL_CLAMP_TO_EDGE, // gl.TEXTURE_WRAP_S
+        10243: GL_CLAMP_TO_EDGE, // gl.TEXTURE_WRAP_T
       },
       texParameters,
     );
@@ -462,10 +462,10 @@ class Texture {
     const { gl } = renderer;
 
     this.tex = gl.createTexture();
-    gl.bindTexture(glTEXTURE2D, this.tex);
-    Object.keys(params).forEach(k => gl.texParameteri(glTEXTURE2D, k, params[k]));
-    gl.texImage2D(glTEXTURE2D, 0, glRGBA, glRGBA, glUNSIGNEDBYTE, src);
-    // gl.generateMipmap(glTEXTURE2D);
+    gl.bindTexture(GL_TEXTURE_2D, this.tex);
+    Object.keys(params).forEach(k => gl.texParameteri(GL_TEXTURE_2D, k, params[k]));
+    gl.texImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, src);
+    // gl.generateMipmap(GL_TEXTURE_2D);
   }
 }
 

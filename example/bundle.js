@@ -25,9 +25,10 @@ e.prototype.add = function (t) {
 var i = function (t, n) {
     var r = Object.assign({
         antialias: !1,
-        alpha: !1,
-        scale: 1
-    }, n), a = r.alpha ? 1 : 770, o = r.scale, s = t.getContext("webgl", r), c = s.getExtension("ANGLE_instanced_arrays"), u = function (t, n) {
+        alpha: !1
+    }, n), a = r.alpha ? 1 : 770, o = r.scale || 1;
+    delete r.scale;
+    var s = t.getContext("webgl", r), c = s.getExtension("ANGLE_instanced_arrays"), u = function (t, n) {
         var e = s.createShader(n);
         return s.shaderSource(e, t), s.compileShader(e), e;
     }, h = s.createProgram();
@@ -43,10 +44,12 @@ var i = function (t, n) {
         0,1,1])), l("g", 2);
     var v = new ArrayBuffer(3407820), p = new Float32Array(v), y = new Uint32Array(v);
     f(34962, v, 35048), l("a", 2, 52, 1), l("s", 2, 52, 1, 8), l("r", 1, 52, 1, 16), l("t", 2, 52, 1, 20), l("u", 4, 52, 1, 28), l("c", 4, 52, 1, 44, 5121, !0), l("z", 1, 52, 1, 48);
-    var x, g, d, b, m, w = function (t) {
+    var x, d, g, b, m, w = function (t) {
         return s.getUniformLocation(h, t);
     }, P = w("m"), z = w("x"), A = w("j"), j = 0, E = function () {
-        return d = t.clientHeight * o | 0, (t.width !== (g = t.clientWidth * o | 0) || t.height !== d) && (t.width = g, t.height = d, !0);
+        g = t.clientHeight * o | 0;
+        var n = t.width !== (d = t.clientWidth * o | 0) || t.height !== g;
+        return t.width = d, t.height = g, n;
     }, F = function () {
         j && (s.blendFunc(m ? 1 : a, m ? 0 : 771), s.depthFunc(m ? 513 : 515), s.bindTexture(3553, b.tex), s.uniform1i(z, b.tex), s.uniform1f(A, m ? b.atest : 0), s.bufferSubData(34962, 0, p.subarray(0, 13 * j)), c.drawElementsInstancedANGLE(4, 6, 5121, 0, j), j = 0);
     }, S = function (t) {
@@ -55,7 +58,7 @@ var i = function (t, n) {
             var n = t.frame, e = n.uvs, i = t.anchor || n.anchor;
             b.tex !== n.tex && (b.tex && F(), b = n);
             var r = 13 * j;
-            p[r++] = i.x, p[r++] = i.y, p[r++] = t.scale.x * n.size.x, p[r++] = t.scale.y * n.size.y, p[r++] = t.rotation, p[r++] = t.position.x, p[r++] = t.position.y, p[r++] = e[0], p[r++] = e[1], p[r++] = e[2], p[r++] = e[3], y[r++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, p[r++] = t.layer.z, j++;
+            p[r++] = i.x, p[r++] = i.y, p[r++] = t.scale.x * n.size.x, p[r++] = t.scale.y * n.size.y, p[r++] = t.rotation, p[r++] = t.position.x, p[r++] = t.position.y, p[r++] = e[0], p[r++] = e[1], p[r++] = e[2], p[r++] = e[3], y[r++] = ((16777215 & t.tint) << 8 | 255 * t.alpha & 255) >>> 0, p[r] = t.layer.z, j++;
         }
     }, D = new e(0), O = [D], L = {
         gl: s,
@@ -81,19 +84,15 @@ var i = function (t, n) {
         resize: E,
         render: function () {
             E();
-            var t = L.camera, n = t.at, e = t.to, i = t.angle, r = n.x - g * e.x, a = n.y - d * e.y, o = Math.cos(i), c = Math.sin(i), u = 2 / g, f = -2 / d;
-            x = [o * u,c * f,0,0,-c * u,o * f,0,0,0,0,-1e-5,0,(n.x * (1 - o) + n.y * c) * u - 2 * r / g - 1,
-                (n.y * (1 - o) - n.x * c) * f + 2 * a / d + 1,0,1], s.useProgram(h), s.enable(3042), s.enable(2929), s.uniformMatrix4fv(P, !1, x), s.viewport(0, 0, g, d), s.clear(16640), b = {
+            var t = L.camera, n = t.at, e = t.to, i = t.angle, r = n.x - d * e.x, a = n.y - g * e.y, o = Math.cos(i), c = Math.sin(i), u = 2 / d, f = -2 / g;
+            x = [o * u,c * f,0,0,-c * u,o * f,0,0,0,0,-1e-5,0,(n.x * (1 - o) + n.y * c) * u - 2 * r / d - 1,
+                (n.y * (1 - o) - n.x * c) * f + 2 * a / g + 1,0,1], s.useProgram(h), s.enable(3042), s.enable(2929), s.uniformMatrix4fv(P, !1, x), s.viewport(0, 0, d, g), s.clear(16640), b = {
                 tex: null
             }, m = !0, O.forEach(function (t) {
-                return t.o.i(function (t) {
-                    return S(t);
-                });
+                return t.o.i(S);
             }), F(), m = !1;
             for (var l = O.length - 1;l >= 0; l--) 
-                { O[l].t.i(function (t) {
-                return S(t);
-            }); }
+                { O[l].t.i(S); }
             F();
         }
     };
@@ -107,7 +106,7 @@ i.Point = (function () {
     }
     
     return t.prototype.set = function (t, n) {
-        return this.x = t || 0, this.y = n || (0 !== n ? this.x : 0), this;
+        return void 0 === t && (t = 0), this.x = t, this.y = n || t, this;
     }, t.prototype.copy = function (t) {
         return this.x = t.x, this.y = t.y, this;
     }, t;

@@ -1,8 +1,6 @@
 import Renderer from '../../dist/renderer.m';
 
-const {
-  Point, Texture, Frame, Sprite,
-} = Renderer;
+const { Point, Sprite } = Renderer;
 
 const stats = new Stats();
 document.body.appendChild(stats.dom);
@@ -11,7 +9,7 @@ const view = document.getElementById('view');
 // const scene = Renderer(view, { alpha: true });
 const scene = Renderer(view);
 const { gl } = scene;
-// console.log(gl);
+console.log(gl);
 
 scene.background(1, 1, 1, 0);
 
@@ -22,7 +20,7 @@ const atlasImg = () => {
   const canvas = document.createElement('canvas');
   const size = 32;
   const half = size / 2;
-  canvas.width = 96;
+  canvas.width = 128;
   canvas.height = 32;
   const ctx = canvas.getContext('2d');
 
@@ -99,12 +97,12 @@ const logoMask = () => {
   return (x, y) => data[(y * 800 + x) * 4] > 0;
 };
 
-const atlas = Texture(scene, atlasImg(), 0.5);
+const atlas = scene.texture(atlasImg(), 0.5);
 atlas.anchor = Point(0.5);
 
-const bFrame = Frame(atlas, Point(), Point(32));
-const qFrame = Frame(atlas, Point(32, 0), Point(32));
-const fFrame = Frame(atlas, Point(64, 0), Point(32));
+const bFrame = atlas.frame(Point(), Point(32));
+const qFrame = atlas.frame(Point(32, 0), Point(32));
+const fFrame = atlas.frame(Point(64, 0), Point(32));
 
 const frames = [atlas, bFrame, qFrame, fFrame];
 

@@ -103,7 +103,7 @@ const Renderer = (canvas, options) => {
   const scale = opts.scale || 1;
   delete opts.scale;
 
-  const gl = canvas.getContext('webgl', opts);
+  const gl = canvas.getContext('webgl', opts) || canvas.getContext('experimental-webg', opts);
 
   /*
   if (DEVELOPMENT) {
